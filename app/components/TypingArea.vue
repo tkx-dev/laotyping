@@ -138,7 +138,7 @@ defineExpose({
       v-if="!isFocused"
       class="absolute inset-0 flex items-center justify-center bg-stone-950/70 backdrop-blur-xs rounded-2xl z-10 cursor-pointer"
     >
-      <span class="text-theme-accent font-semibold font-lao text-lg">
+      <span class="text-theme-accent font-semibold font-phetsarath text-lg">
         ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ
       </span>
     </div>
@@ -147,7 +147,7 @@ defineExpose({
     <div
       ref="wordsDisplayRef"
       lang="lo"
-      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-lao text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-phetsarath font-bold text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden"
     >
       <span
         v-for="(word, wIdx) in words"

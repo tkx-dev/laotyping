@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@100..900&display=swap');
 @import "tailwindcss";
 
 @layer base {
@@ -63,10 +62,34 @@
   }
 }
 
+/* Phetsarath OT Font Declarations (Standard local font + local bundle fallback) */
+@font-face {
+  font-family: 'Phetsarath OT';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Phetsarath OT'),
+       local('Phetsarath'),
+       local('PhetsarathOT'),
+       url('/fonts/Phetsarath-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Phetsarath OT';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('Phetsarath OT Bold'),
+       local('Phetsarath Bold'),
+       local('PhetsarathOT-Bold'),
+       url('/fonts/Phetsarath-Bold.ttf') format('truetype');
+}
+
 @theme {
-  --font-lao: 'Noto Sans Lao', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-sans: 'Noto Sans Lao', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-lao: 'Noto Sans Lao', system-ui, -apple-system, sans-serif;
+  --font-phetsarath: 'Phetsarath OT', 'Phetsarath', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   --color-theme-bg: var(--theme-bg);
   --color-theme-surface: var(--theme-surface);
@@ -91,7 +114,7 @@
 body {
   background-color: var(--theme-bg);
   color: var(--theme-text-primary);
-  font-family: var(--font-sans);
+  font-family: var(--font-lao);
   min-height: 100vh;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
@@ -106,13 +129,3 @@ body {
 .caret-pulse {
   animation: caretBlink 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
-
-/* Lao Font Rule */
-.font-lao,
-.font-lao * {
-  font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
-  font-optical-sizing: auto;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
