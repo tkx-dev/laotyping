@@ -157,7 +157,7 @@ function clusterClass(state: CharState) {
     case "correct":
       return "text-theme-correct";
     case "wrong":
-      return "text-theme-incorrect";
+      return "text-theme-muted"; // keep the correct glyph visible underneath the red overlay
     case "partial":
       return "text-theme-subtle"; // the typed part is drawn on top as an overlay
     default:
@@ -468,9 +468,15 @@ const incorrectWordsCount = computed(
                   <span :class="clusterClass(c.state)">{{ c.text }}</span>
                   <!-- Overlay: only the part the user has typed so far (e.g. "ຮ" of "ຮ້") -->
                   <span
-                    v-if="c.state === 'partial'"
-                    class="absolute left-0 top-0 text-theme-correct pointer-events-none"
+                    v-if="c.doneText && c.state !== 'correct'"
+                    class="absolute left-0 top-0 z-10 text-theme-correct pointer-events-none"
                     >{{ c.doneText }}</span
+                  >
+                  <!-- Wrong key(s): draw what the user typed in translucent red ON TOP of the correct glyph -->
+                  <span
+                    v-if="c.state === 'wrong'"
+                    class="absolute left-0 top-0 text-theme-incorrect opacity-90 pointer-events-none"
+                    >{{ c.typedText }}</span
                   >
                 </span>
               </template>

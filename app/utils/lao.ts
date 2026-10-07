@@ -67,6 +67,8 @@ export interface ClusterView {
   state: CharState;
   /** Typed-and-correct part of a partially typed cluster (drawn as an overlay), e.g. "ຮ" of "ຮ້". */
   doneText: string;
+  /** Exactly what the user typed over this cluster (used to draw wrong characters on top). */
+  typedText: string;
   /** Per-character states (informational: browsers can't colour glyphs inside one cluster separately). */
   chars: CharView[];
 }
@@ -90,6 +92,7 @@ export function buildClusterView(target: string, input: string) {
         typed === undefined ? "pending" : typed === cp ? "correct" : "wrong";
       return { text: cp, state };
     });
+    const typedText = inputCps.slice(offset, offset + cps.length).join("");
     offset += cps.length;
 
     const typedCount = chars.filter((c) => c.state !== "pending").length;
@@ -99,17 +102,17 @@ export function buildClusterView(target: string, input: string) {
     else if (typedCount === chars.length) state = "correct";
     else state = "partial";
 
+    // Correct characters from the start of the cluster up to the first wrong/untyped one
+    const firstNotCorrect = chars.findIndex((c) => c.state !== "correct");
     const doneText =
-      state === "correct"
+      firstNotCorrect === -1
         ? text
-        : state === "partial"
-          ? chars
-              .slice(0, typedCount)
-              .map((c) => c.text)
-              .join("")
-          : "";
+        : chars
+            .slice(0, firstNotCorrect)
+            .map((c) => c.text)
+            .join("");
 
-    return { text, state, chars, doneText };
+    return { text, state, chars, doneText, typedText };
   });
 
   return { clusters, extra: inputCps.slice(targetLen).join("") };
