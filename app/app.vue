@@ -37,6 +37,7 @@ const {
   incorrectKeystrokes,
   initTest,
   handleInput,
+  handleKeydown,
   setMode,
   setTimeLimit,
   setWordLimit
@@ -71,6 +72,9 @@ function handleGlobalKeydown(e: KeyboardEvent) {
   if (status.value !== 'finished' && document.activeElement !== inputRef.value) {
     if ((e.key.length === 1 || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
       focusInput()
+      if (e.key === 'Backspace') {
+        handleKeydown(e)
+      }
     }
   }
 }
@@ -109,6 +113,24 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleGlobalKeydown)
+})
+
+// Active word breakdown for rendering without breaking Lao combining characters
+const activeWordBreakdown = computed(() => {
+  const target = words.value[currentWordIndex.value] || ''
+  const input = currentInput.value
+  if (!input) {
+    return { matched: '', mismatched: '', isMatch: true }
+  }
+  let matchLen = 0
+  while (matchLen < input.length && matchLen < target.length && input[matchLen] === target[matchLen]) {
+    matchLen++
+  }
+  return {
+    matched: input.slice(0, matchLen),
+    mismatched: input.slice(matchLen),
+    isMatch: matchLen === input.length
+  }
 })
 
 // Statistics computation for finished state
@@ -249,6 +271,7 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
           autocapitalize="off"
           spellcheck="false"
           @input="handleInput"
+          @keydown="handleKeydown"
           @focus="isFocused = true"
           @blur="handleBlur"
         />
@@ -264,70 +287,59 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
         </div>
 
         <!-- Words Stream -->
-        <div ref="wordsDisplayRef" class="flex flex-wrap gap-x-5 gap-y-3 font-lao text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden">
+        <div ref="wordsDisplayRef" class="flex flex-wrap gap-x-4 gap-y-2 font-lao text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden">
           <span
             v-for="(word, wIdx) in words"
             :key="wIdx"
-            class="relative inline-flex transition-colors rounded-sm"
+            class="relative inline-block transition-colors rounded-xs"
             :class="{
-              'active-word text-theme-muted': wIdx === currentWordIndex,
+              'active-word': wIdx === currentWordIndex,
               'text-theme-subtle': wIdx > currentWordIndex
             }"
           >
             <!-- Previously completed word -->
             <template v-if="wIdx < currentWordIndex">
               <span
-                v-for="(c, cIdx) in Array.from(word)"
-                :key="cIdx"
-                :class="wordHistory[wIdx]?.isCorrect ? 'text-theme-correct' : 'text-theme-incorrect underline decoration-theme-incorrect/50'"
+                :class="wordHistory[wIdx]?.isCorrect ? 'text-theme-correct' : 'text-theme-incorrect'"
               >
-                {{ c }}
+                {{ word }}
               </span>
             </template>
 
             <!-- Currently active word -->
             <template v-else-if="wIdx === currentWordIndex">
-              <span
-                v-for="(targetChar, charIdx) in Array.from(word)"
-                :key="charIdx"
-                class="relative transition-colors"
-                :class="{
-                  'text-theme-correct': charIdx < currentInput.length && currentInput[charIdx] === targetChar,
-                  'text-theme-incorrect bg-red-500/20 rounded-xs': charIdx < currentInput.length && currentInput[charIdx] !== targetChar
-                }"
-              >
-                <!-- Render animated caret -->
-                <span
-                  v-if="charIdx === currentInput.length && isFocused"
-                  class="absolute w-[2.5px] h-[1.3em] bg-theme-accent rounded-full caret-pulse -left-[1px] top-[0.1em] pointer-events-none"
-                />
-                {{ targetChar }}
-              </span>
+              <!-- Base target word placeholder -->
+              <span class="text-theme-subtle select-none">{{ word }}</span>
 
-              <!-- Extra characters typed past word length -->
+              <!-- Caret when user hasn't typed anything yet -->
               <span
-                v-for="(extraChar, extraIdx) in Array.from(currentInput.slice(word.length))"
-                :key="'extra-' + extraIdx"
-                class="text-theme-extra opacity-90 underline decoration-wavy"
-              >
-                {{ extraChar }}
-              </span>
-
-              <!-- Caret at the end of word if extra characters -->
-              <span
-                v-if="currentInput.length >= word.length && isFocused"
-                class="absolute w-[2.5px] h-[1.3em] bg-theme-accent rounded-full caret-pulse -right-[2px] top-[0.1em] pointer-events-none"
+                v-if="isFocused && !currentInput"
+                class="absolute -left-[2px] top-[0.15em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse pointer-events-none shadow-[0_0_8px_var(--color-theme-accent)]"
               />
+
+              <!-- Overlay of typed characters -->
+              <span
+                v-if="currentInput"
+                class="absolute left-0 top-0 whitespace-nowrap pointer-events-none select-none"
+              >
+                <span class="text-theme-correct">{{ activeWordBreakdown.matched }}</span>
+                <span
+                  v-if="activeWordBreakdown.mismatched"
+                  class="text-theme-incorrect"
+                >
+                  {{ activeWordBreakdown.mismatched }}
+                </span>
+                <!-- Caret following cursor -->
+                <span
+                  v-if="isFocused"
+                  class="inline-block w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse align-middle -mt-0.5 ml-[1px] shadow-[0_0_8px_var(--color-theme-accent)]"
+                />
+              </span>
             </template>
 
-            <!-- Upcoming word -->
+            <!-- Upcoming word (rendered as complete, natural text) -->
             <template v-else>
-              <span
-                v-for="(c, cIdx) in Array.from(word)"
-                :key="cIdx"
-              >
-                {{ c }}
-              </span>
+              <span>{{ word }}</span>
             </template>
           </span>
         </div>

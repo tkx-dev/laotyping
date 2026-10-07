@@ -187,13 +187,63 @@ export function useTypingEngine() {
       return
     }
 
-    // Normal typing update
-    const previousLength = currentInput.value.length
-    const currentLength = rawVal.length
+    // Current target word
     const targetWord = words.value[currentWordIndex.value] || ''
+    const previousLength = currentInput.value.length
 
+    // Check if typed characters exceed targetWord length (e.g. 5th char on a 4-char word)
+    if (rawVal.length > targetWord.length) {
+      // The current word is completed with the first targetWord.length characters
+      const currentWordTyped = rawVal.slice(0, targetWord.length)
+      const overflowChars = rawVal.slice(targetWord.length)
+
+      // Count keystrokes for characters up to targetWord.length
+      for (let i = previousLength; i < targetWord.length; i++) {
+        totalKeystrokes.value++
+        if (rawVal[i] === targetWord[i]) {
+          correctKeystrokes.value++
+        } else {
+          incorrectKeystrokes.value++
+        }
+      }
+
+      // Commit the current word
+      wordHistory.value.push({
+        target: targetWord,
+        typed: currentWordTyped,
+        isCorrect: currentWordTyped === targetWord
+      })
+
+      currentWordIndex.value++
+
+      // Check if finished in words mode
+      if (mode.value === 'words' && currentWordIndex.value >= words.value.length) {
+        currentInput.value = ''
+        inputTarget.value = ''
+        finishTest()
+        return
+      }
+
+      // The overflow character(s) become the input of the next word
+      currentInput.value = overflowChars
+      inputTarget.value = overflowChars
+
+      // Count keystroke for the overflow character on the new word
+      const nextTargetWord = words.value[currentWordIndex.value] || ''
+      for (let i = 0; i < overflowChars.length; i++) {
+        totalKeystrokes.value++
+        if (overflowChars[i] === nextTargetWord[i]) {
+          correctKeystrokes.value++
+        } else {
+          incorrectKeystrokes.value++
+        }
+      }
+      return
+    }
+
+    // Normal typing within the length limit
+    const currentLength = rawVal.length
     if (currentLength > previousLength) {
-      // Key pressed
       const addedChar = rawVal[currentLength - 1]
       const expectedChar = targetWord[currentLength - 1]
 
@@ -206,6 +256,26 @@ export function useTypingEngine() {
     }
 
     currentInput.value = rawVal
+  }
+
+  // Handle keydown (Backspace to go back and edit previous word)
+  function handleKeydown(e: KeyboardEvent) {
+    if (status.value === 'finished') return
+
+    if (e.key === 'Backspace') {
+      // If current input is empty and we have a previous word to go back to
+      if (currentInput.value.length === 0 && currentWordIndex.value > 0) {
+        e.preventDefault()
+        currentWordIndex.value--
+        const prevWord = wordHistory.value.pop()
+        currentInput.value = prevWord ? prevWord.typed : ''
+
+        const inputTarget = e.target as HTMLInputElement
+        if (inputTarget) {
+          inputTarget.value = currentInput.value
+        }
+      }
+    }
   }
 
   function setMode(newMode: TestMode) {
@@ -244,6 +314,7 @@ export function useTypingEngine() {
     incorrectKeystrokes,
     initTest,
     handleInput,
+    handleKeydown,
     setMode,
     setTimeLimit,
     setWordLimit
