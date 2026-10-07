@@ -14,15 +14,7 @@ useHead({
     },
     { name: "viewport", content: "width=device-width, initial-scale=1.0" },
   ],
-  link: [
-    { rel: "preconnect", href: "https://fonts.googleapis.com" },
-    { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
-    {
-      rel: "stylesheet",
-      href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@100..900&display=swap",
-    },
-    { rel: "icon", type: "image/svg+xml", href: "/favicon.ico" },
-  ],
+  link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.ico" }],
 });
 
 const {
@@ -40,7 +32,10 @@ const {
   cpm,
   accuracy,
   totalKeystrokes,
+  combo,
+  maxCombo,
   activeWordView,
+  nextExpectedCharInfo,
   initTest,
   handleInput,
   handleCompositionEnd,
@@ -51,6 +46,8 @@ const {
 } = useTypingEngine();
 
 const { currentTheme, setTheme, THEME_OPTIONS } = useTheme();
+
+const showRestartConfirm = ref(false);
 
 const typingAreaRef = ref<{
   focusInput: () => void;
@@ -69,11 +66,34 @@ function restart() {
   });
 }
 
+function requestRestart() {
+  if (status.value === "finished") {
+    restart();
+  } else {
+    showRestartConfirm.value = true;
+  }
+}
+
+function handleConfirmRestart() {
+  showRestartConfirm.value = false;
+  restart();
+}
+
+function handleCancelRestart() {
+  showRestartConfirm.value = false;
+  nextTick(() => {
+    focusInput();
+  });
+}
+
 function handleGlobalKeydown(e: KeyboardEvent) {
-  // Tab key to restart
+  // If confirm popup is open, ignore global key shortcuts
+  if (showRestartConfirm.value) return;
+
+  // Tab key to request restart with confirmation
   if (e.key === "Tab") {
     e.preventDefault();
-    restart();
+    requestRestart();
     return;
   }
 
@@ -97,7 +117,9 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  initTest();
+  if (words.value.length === 0) {
+    initTest();
+  }
   nextTick(() => {
     focusInput();
   });
@@ -131,7 +153,7 @@ const incorrectWordsCount = computed(
       :time-left="timeLeft"
       :current-word-index="currentWordIndex"
       :word-limit="wordLimit"
-      @restart="restart"
+      @restart="requestRestart"
       @select-theme="setTheme"
     />
 
@@ -155,14 +177,25 @@ const incorrectWordsCount = computed(
           :current-word-index="currentWordIndex"
           :current-input="currentInput"
           :word-history="wordHistory"
+          :combo="combo"
           :active-word-view="activeWordView"
           @input="handleInput"
           @compositionend="handleCompositionEnd"
           @keydown="handleKeydown"
         />
 
+        <!-- Visual Keyboard -->
+        <ClientOnly>
+          <VisualKeyboard
+            :next-char="nextExpectedCharInfo?.char"
+            :target-char="nextExpectedCharInfo?.targetChar"
+            :is-error="nextExpectedCharInfo?.isError"
+            :is-space="nextExpectedCharInfo?.isSpace"
+          />
+        </ClientOnly>
+
         <!-- Action buttons -->
-        <RestartButton @restart="restart" />
+        <RestartButton @restart="requestRestart" />
       </template>
 
       <!-- Results View -->
@@ -175,11 +208,23 @@ const incorrectWordsCount = computed(
         :incorrect-words-count="incorrectWordsCount"
         :elapsed-seconds="elapsedSeconds"
         :total-keystrokes="totalKeystrokes"
+        :max-combo="maxCombo"
         @restart="restart"
       />
     </main>
 
     <!-- Footer -->
     <AppFooter />
+
+    <!-- Restart Confirmation Modal -->
+    <CommonConfirmDialog
+      :is-open="showRestartConfirm"
+      title="ຢືນຢັນການເລີ່ມໃໝ່"
+      message="ທ່ານຕ້ອງການປ່ຽນຊຸດຂໍ້ຄວາມ ແລະ ເລີ່ມຕົ້ນໃໝ່ແທ້ບໍ່? ຄວາມຄືບໜ້າໃນປະຈຸບັນຈະບໍ່ຖືກບັນທຶກ."
+      confirm-text="ຢືນຢັນ (ເລີ່ມໃໝ່)"
+      cancel-text="ຍົກເລີກ"
+      @confirm="handleConfirmRestart"
+      @cancel="handleCancelRestart"
+    />
   </div>
 </template>

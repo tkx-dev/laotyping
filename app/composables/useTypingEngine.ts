@@ -6,6 +6,7 @@ import {
   commonPrefixLen,
   buildClusterView,
 } from "../utils/lao";
+import { useTypingSound } from "./useTypingSound";
 
 export type TestMode = "time" | "words";
 export type TimeOption = 15 | 30 | 60;
@@ -18,6 +19,13 @@ export interface WordHistory {
   isCorrect: boolean;
 }
 
+export interface NextExpectedCharInfo {
+  char: string;
+  targetChar: string;
+  isError: boolean;
+  isSpace: boolean;
+}
+
 const MAX_EXTRA_CHARS = 8; // how many chars past the end of a word the user may type
 const TICK_MS = 200;
 
@@ -27,7 +35,7 @@ export function useTypingEngine() {
   const wordLimit = ref<WordOption>(25);
 
   const status = ref<EngineStatus>("idle");
-  const words = ref<string[]>([]);
+  const words = useState<string[]>("typing_engine_words", () => []);
   const currentWordIndex = ref(0);
   const currentInput = ref(""); // always stored in normalized form
   const wordHistory = ref<WordHistory[]>([]);
@@ -36,7 +44,17 @@ export function useTypingEngine() {
   const totalKeystrokes = ref(0);
   const correctKeystrokes = ref(0);
   const incorrectKeystrokes = ref(0);
+  const combo = ref(0);
+  const maxCombo = ref(0);
   const timer = ref<number | null>(null);
+
+  const {
+    playKey,
+    playErrorKey,
+    playBackspace,
+    playWordComplete,
+    playFinish,
+  } = useTypingSound();
   const timeLeft = ref(30);
   const startTime = ref<number | null>(null);
   const endTime = ref<number | null>(null);
@@ -73,6 +91,8 @@ export function useTypingEngine() {
     totalKeystrokes.value = 0;
     correctKeystrokes.value = 0;
     incorrectKeystrokes.value = 0;
+    combo.value = 0;
+    maxCombo.value = 0;
     startTime.value = null;
     endTime.value = null;
 
@@ -85,7 +105,9 @@ export function useTypingEngine() {
     }
   }
 
-  initTest();
+  if (words.value.length === 0) {
+    initTest();
+  }
 
   function tick() {
     if (status.value !== "running" || startTime.value === null) return;
@@ -118,6 +140,7 @@ export function useTypingEngine() {
         ? Math.min(end, startTime.value + timeLimit.value * 1000)
         : end;
     status.value = "finished";
+    playFinish();
 
     // Commit the word being typed (if any)
     if (currentInput.value.length > 0) {
@@ -177,6 +200,47 @@ export function useTypingEngine() {
     buildClusterView(currentTarget(), currentInput.value),
   );
 
+  // Next expected character for visual keyboard & hand guidance
+  const nextExpectedCharInfo = computed<NextExpectedCharInfo | null>(() => {
+    if (status.value === "finished") return null;
+    const target = currentTarget();
+    if (!target) return null;
+    const targetCps = toCps(target);
+    const inputCps = toCps(currentInput.value);
+    const p = commonPrefixLen(targetCps, inputCps);
+
+    // If there are extra/wrong characters typed, prompt Backspace
+    if (inputCps.length > p) {
+      return {
+        char: "Backspace",
+        targetChar: targetCps[p] ?? " ",
+        isError: true,
+        isSpace: false,
+      };
+    }
+
+    // If whole word is typed correctly, prompt Space to advance
+    if (p === targetCps.length) {
+      return {
+        char: " ",
+        targetChar: " ",
+        isError: false,
+        isSpace: true,
+      };
+    }
+
+    // Next character in current target word
+    const nextCh = targetCps[p];
+    if (!nextCh) return null;
+
+    return {
+      char: nextCh,
+      targetChar: nextCh,
+      isError: false,
+      isSpace: false,
+    };
+  });
+
   /**
    * Count keystrokes by DIFFING previous vs new normalized input
    * (works for paste, IME, tone/vowel typed in either order, fast typing...).
@@ -198,8 +262,16 @@ export function useTypingEngine() {
 
     const allMatch = added.every((c, k) => c === targetCps[p + k]);
     totalKeystrokes.value += rawDelta;
-    if (allMatch) correctKeystrokes.value += rawDelta;
-    else incorrectKeystrokes.value += rawDelta;
+    if (allMatch) {
+      correctKeystrokes.value += rawDelta;
+      combo.value += rawDelta;
+      if (combo.value > maxCombo.value) maxCombo.value = combo.value;
+      playKey(true, false, combo.value);
+    } else {
+      incorrectKeystrokes.value += rawDelta;
+      combo.value = 0;
+      playErrorKey();
+    }
   }
 
   function processValue(el: HTMLInputElement) {
@@ -229,6 +301,10 @@ export function useTypingEngine() {
     );
 
     if (!hasSpace) {
+      const rawDelta = toCps(head).length - toCps(prev).length;
+      if (rawDelta < 0) {
+        playBackspace();
+      }
       if (el.value !== next) el.value = next;
       currentInput.value = next;
       return;
@@ -241,8 +317,16 @@ export function useTypingEngine() {
 
     const isCorrect = next === target;
     totalKeystrokes.value++;
-    if (isCorrect) correctKeystrokes.value++;
-    else incorrectKeystrokes.value++;
+    if (isCorrect) {
+      correctKeystrokes.value++;
+      combo.value += 2; // bonus combo streak for completing word
+      if (combo.value > maxCombo.value) maxCombo.value = combo.value;
+      playWordComplete(true, combo.value);
+    } else {
+      incorrectKeystrokes.value++;
+      combo.value = 0;
+      playWordComplete(false, 0);
+    }
 
     wordHistory.value.push({ target, typed: next, isCorrect });
     currentWordIndex.value++;
@@ -284,6 +368,7 @@ export function useTypingEngine() {
 
         const el = e.target as HTMLInputElement;
         if (el) el.value = currentInput.value;
+        playBackspace();
       }
     }
   }
@@ -322,7 +407,10 @@ export function useTypingEngine() {
     totalKeystrokes,
     correctKeystrokes,
     incorrectKeystrokes,
+    combo,
+    maxCombo,
     activeWordView, // NEW: [{ text, state }] per cluster + extra chars
+    nextExpectedCharInfo, // Next character and finger guide
     initTest,
     handleInput,
     handleCompositionEnd, // NEW: bind to @compositionend

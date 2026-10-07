@@ -7,6 +7,7 @@ defineProps<{
   incorrectWordsCount: number;
   elapsedSeconds: number;
   totalKeystrokes: number;
+  maxCombo?: number;
 }>();
 
 const emit = defineEmits<{
@@ -96,6 +97,12 @@ const emit = defineEmits<{
         <span>ກົດແປ້ນ: </span>
         <span class="text-theme-primary font-semibold">
           {{ totalKeystrokes }}
+        </span>
+      </div>
+      <div v-if="maxCombo && maxCombo > 0">
+        <span>Streak ສູງສຸດ: </span>
+        <span class="text-theme-accent font-semibold">
+          🔥 {{ maxCombo }}
         </span>
       </div>
     </div>
