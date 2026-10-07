@@ -282,7 +282,7 @@ function isKeyPressed(key: KeyDefinition): boolean {
                     ? 'bg-stone-700 border-white/20 scale-[0.97]'
                     : 'bg-stone-800/80 hover:bg-stone-800 border-white/8 text-stone-200',
               // Heights and layout
-              'h-10 sm:h-12 md:h-13 py-1 px-1.5',
+              'h-11 sm:h-13 md:h-14 pt-2 pb-1.5 px-2 sm:pt-2.5 sm:pb-2 sm:px-2.5',
             ]"
             :style="{
               flexGrow: key.width ?? 1,
@@ -292,7 +292,7 @@ function isKeyPressed(key: KeyDefinition): boolean {
             <!-- Keycap Legends -->
             <!-- Top Row: Shifted characters or Secondary -->
             <div
-              class="w-full flex items-center justify-between text-[10px] sm:text-xs leading-none opacity-80 font-mono"
+              class="w-full flex items-center justify-between px-0.5 pt-0.5 leading-none transition-colors"
             >
               <!-- Shifted Lao or EN -->
               <span
@@ -301,7 +301,14 @@ function isKeyPressed(key: KeyDefinition): boolean {
                   key.laoShift &&
                   key.laoShift !== key.lao
                 "
-                class="font-phetsarath font-bold text-theme-accent"
+                class="font-phetsarath font-bold text-xs sm:text-sm tracking-normal transition-colors"
+                :class="
+                  isKeyActive(key)
+                    ? 'text-white'
+                    : isKeyShiftActive(key)
+                      ? 'text-stone-950 font-bold'
+                      : 'text-theme-accent opacity-90'
+                "
               >
                 {{ key.laoShift }}
               </span>
@@ -309,7 +316,14 @@ function isKeyPressed(key: KeyDefinition): boolean {
                 v-else-if="
                   legendMode === 'en' && key.enShift && key.enShift !== key.en
                 "
-                class="text-stone-400"
+                class="font-mono text-xs sm:text-sm font-semibold transition-colors"
+                :class="
+                  isKeyActive(key)
+                    ? 'text-white'
+                    : isKeyShiftActive(key)
+                      ? 'text-stone-950'
+                      : 'text-stone-400 opacity-90'
+                "
               >
                 {{ key.enShift }}
               </span>
@@ -318,8 +332,14 @@ function isKeyPressed(key: KeyDefinition): boolean {
               <!-- English Letter Legend (QWERTY key) in top-right corner -->
               <span
                 v-if="legendMode !== 'lao' && key.en && !key.isSpecial"
-                class="text-[9px] sm:text-[11px] font-bold text-stone-400 uppercase tracking-tight"
-                :class="isKeyActive(key) ? 'text-white/90' : ''"
+                class="text-[10px] sm:text-xs font-bold font-mono uppercase tracking-tight transition-colors"
+                :class="
+                  isKeyActive(key)
+                    ? 'text-white/90'
+                    : isKeyShiftActive(key)
+                      ? 'text-stone-950/80'
+                      : 'text-stone-400/80'
+                "
               >
                 {{ key.en }}
               </span>

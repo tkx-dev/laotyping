@@ -2,6 +2,13 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
+  app: {
+    head: {
+      htmlAttrs: {
+        lang: 'lo',
+      },
+    },
+  },
   modules: [
     '@nuxt/eslint',
     '@nuxt/icon/module',
