@@ -52,6 +52,8 @@ const {
 
 const { currentTheme, setTheme, THEME_OPTIONS } = useTheme();
 
+const showRestartConfirm = ref(false);
+
 const typingAreaRef = ref<{
   focusInput: () => void;
   isFocused: boolean;
@@ -69,11 +71,34 @@ function restart() {
   });
 }
 
+function requestRestart() {
+  if (status.value === "finished") {
+    restart();
+  } else {
+    showRestartConfirm.value = true;
+  }
+}
+
+function handleConfirmRestart() {
+  showRestartConfirm.value = false;
+  restart();
+}
+
+function handleCancelRestart() {
+  showRestartConfirm.value = false;
+  nextTick(() => {
+    focusInput();
+  });
+}
+
 function handleGlobalKeydown(e: KeyboardEvent) {
-  // Tab key to restart
+  // If confirm popup is open, ignore global key shortcuts
+  if (showRestartConfirm.value) return;
+
+  // Tab key to request restart with confirmation
   if (e.key === "Tab") {
     e.preventDefault();
-    restart();
+    requestRestart();
     return;
   }
 
@@ -131,7 +156,7 @@ const incorrectWordsCount = computed(
       :time-left="timeLeft"
       :current-word-index="currentWordIndex"
       :word-limit="wordLimit"
-      @restart="restart"
+      @restart="requestRestart"
       @select-theme="setTheme"
     />
 
@@ -162,7 +187,7 @@ const incorrectWordsCount = computed(
         />
 
         <!-- Action buttons -->
-        <RestartButton @restart="restart" />
+        <RestartButton @restart="requestRestart" />
       </template>
 
       <!-- Results View -->
@@ -181,5 +206,16 @@ const incorrectWordsCount = computed(
 
     <!-- Footer -->
     <AppFooter />
+
+    <!-- Restart Confirmation Modal -->
+    <ConfirmDialog
+      :is-open="showRestartConfirm"
+      title="ຢືນຢັນການເລີ່ມໃໝ່"
+      message="ທ່ານຕ້ອງການປ່ຽນຊຸດຂໍ້ຄວາມ ແລະ ເລີ່ມຕົ້ນໃໝ່ແທ້ບໍ່? ຄວາມຄືບໜ້າໃນປະຈຸບັນຈະບໍ່ຖືກບັນທຶກ."
+      confirm-text="ຢືນຢັນ (ເລີ່ມໃໝ່)"
+      cancel-text="ຍົກເລີກ"
+      @confirm="handleConfirmRestart"
+      @cancel="handleCancelRestart"
+    />
   </div>
 </template>
