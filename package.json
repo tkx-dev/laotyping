@@ -7,7 +7,6 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "deploy": "nuxt generate && firebase deploy --only hosting",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
