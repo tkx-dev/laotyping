@@ -1,22 +1,34 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
-import { useTypingEngine, type TimeOption, type WordOption } from './composables/useTypingEngine'
-import { useTheme } from './composables/useTheme'
+import { ref, onMounted, onUnmounted, nextTick, watch, computed } from "vue";
+import {
+  useTypingEngine,
+  type TimeOption,
+  type WordOption,
+} from "./composables/useTypingEngine";
+import { useTheme } from "./composables/useTheme";
+import { buildClusterView, type CharState } from "./utils/lao";
 
 // SEO and Meta
 useHead({
-  title: 'LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)',
+  title: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)",
   meta: [
-    { name: 'description', content: 'ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)' },
-    { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }
+    {
+      name: "description",
+      content:
+        "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
+    },
+    { name: "viewport", content: "width=device-width, initial-scale=1.0" },
   ],
   link: [
-    { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-    { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-    { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@100..900&display=swap' },
-    { rel: 'icon', type: 'image/svg+xml', href: '/favicon.ico' }
-  ]
-})
+    { rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: "" },
+    {
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@100..900&display=swap",
+    },
+    { rel: "icon", type: "image/svg+xml", href: "/favicon.ico" },
+  ],
+});
 
 const {
   mode,
@@ -35,120 +47,169 @@ const {
   totalKeystrokes,
   correctKeystrokes,
   incorrectKeystrokes,
+  activeWordView,
   initTest,
   handleInput,
+  handleCompositionEnd,
   handleKeydown,
   setMode,
   setTimeLimit,
-  setWordLimit
-} = useTypingEngine()
+  setWordLimit,
+} = useTypingEngine();
 
-const { currentTheme, setTheme, THEME_OPTIONS } = useTheme()
+const { currentTheme, setTheme, THEME_OPTIONS } = useTheme();
 
-const inputRef = ref<HTMLInputElement | null>(null)
-const wordsDisplayRef = ref<HTMLDivElement | null>(null)
-const isFocused = ref(false)
+const inputRef = ref<HTMLInputElement | null>(null);
+const wordsDisplayRef = ref<HTMLDivElement | null>(null);
+const isFocused = ref(false);
 
 function focusInput() {
   if (inputRef.value) {
-    inputRef.value.focus()
-    isFocused.value = true
+    inputRef.value.focus();
+    isFocused.value = true;
   }
 }
 
 function handleBlur() {
-  isFocused.value = false
+  isFocused.value = false;
 }
 
 function handleGlobalKeydown(e: KeyboardEvent) {
   // Tab key to restart
-  if (e.key === 'Tab') {
-    e.preventDefault()
-    restart()
-    return
+  if (e.key === "Tab") {
+    e.preventDefault();
+    restart();
+    return;
   }
 
+  if (e.isComposing) return;
+
   // Auto focus input when user starts typing anywhere on the page
-  if (status.value !== 'finished' && document.activeElement !== inputRef.value) {
-    if ((e.key.length === 1 || e.key === 'Backspace') && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      focusInput()
-      if (e.key === 'Backspace') {
-        handleKeydown(e)
+  if (
+    status.value !== "finished" &&
+    document.activeElement !== inputRef.value
+  ) {
+    if (
+      (e.key.length === 1 || e.key === "Backspace") &&
+      !e.ctrlKey &&
+      !e.metaKey &&
+      !e.altKey
+    ) {
+      focusInput();
+      if (e.key === "Backspace") {
+        handleKeydown(e);
       }
     }
   }
 }
 
 function restart() {
-  initTest()
+  initTest();
   nextTick(() => {
-    focusInput()
-  })
+    focusInput();
+  });
 }
+
+// The engine is the single source of truth for the input text.
+// Keep the real <input> in sync (e.g. after restart / mode change),
+// instead of binding :value (which can fight with IME composition).
+watch(currentInput, (v) => {
+  if (inputRef.value && inputRef.value.value !== v) {
+    inputRef.value.value = v;
+  }
+});
 
 // Auto scroll word container to follow active word
 watch(currentWordIndex, () => {
   nextTick(() => {
-    if (!wordsDisplayRef.value) return
-    const activeEl = wordsDisplayRef.value.querySelector('.active-word') as HTMLElement | null
+    if (!wordsDisplayRef.value) return;
+    const activeEl = wordsDisplayRef.value.querySelector(
+      ".active-word",
+    ) as HTMLElement | null;
     if (activeEl) {
-      const containerTop = wordsDisplayRef.value.offsetTop
-      const activeTop = activeEl.offsetTop
+      const containerTop = wordsDisplayRef.value.offsetTop;
+      const activeTop = activeEl.offsetTop;
       if (activeTop - containerTop > 70) {
-        wordsDisplayRef.value.scrollTop = activeTop - containerTop - 35
+        wordsDisplayRef.value.scrollTop = activeTop - containerTop - 35;
       } else {
-        wordsDisplayRef.value.scrollTop = 0
+        wordsDisplayRef.value.scrollTop = 0;
       }
     }
-  })
-})
+  });
+});
 
 onMounted(() => {
-  initTest()
+  initTest();
   nextTick(() => {
-    focusInput()
-  })
-  window.addEventListener('keydown', handleGlobalKeydown)
-})
+    focusInput();
+  });
+  window.addEventListener("keydown", handleGlobalKeydown);
+});
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', handleGlobalKeydown)
-})
+  window.removeEventListener("keydown", handleGlobalKeydown);
+});
 
-// Active word breakdown for rendering without breaking Lao combining characters
-const activeWordBreakdown = computed(() => {
-  const target = words.value[currentWordIndex.value] || ''
-  const input = currentInput.value
-  if (!input) {
-    return { matched: '', mismatched: '', isMatch: true }
+// ---- Rendering helpers (cluster based, so Lao marks never get split from their base) ----
+
+function clusterClass(state: CharState) {
+  switch (state) {
+    case "correct":
+      return "text-theme-correct";
+    case "wrong":
+      return "text-theme-incorrect";
+    case "partial":
+      return "text-theme-subtle"; // the typed part is drawn on top as an overlay
+    default:
+      return "text-theme-subtle";
   }
-  let matchLen = 0
-  while (matchLen < input.length && matchLen < target.length && input[matchLen] === target[matchLen]) {
-    matchLen++
-  }
-  return {
-    matched: input.slice(0, matchLen),
-    mismatched: input.slice(matchLen),
-    isMatch: matchLen === input.length
-  }
-})
+}
+
+// Caret goes before the first untyped cluster (or at the very end)
+const caretIndex = computed(() => {
+  const { clusters, extra } = activeWordView.value;
+  if (extra) return clusters.length;
+  const i = clusters.findIndex((c) => c.state === "pending");
+  return i === -1 ? clusters.length : i;
+});
+
+// View for words that were already submitted but typed incorrectly
+function historyView(idx: number) {
+  const h = wordHistory.value[idx];
+  return h ? buildClusterView(h.target, h.typed) : null;
+}
 
 // Statistics computation for finished state
-const correctWordsCount = computed(() => wordHistory.value.filter(w => w.isCorrect).length)
-const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCorrect).length)
+const correctWordsCount = computed(
+  () => wordHistory.value.filter((w) => w.isCorrect).length,
+);
+const incorrectWordsCount = computed(
+  () => wordHistory.value.filter((w) => !w.isCorrect).length,
+);
 </script>
 
 <template>
-  <div class="min-h-screen bg-theme-bg text-theme-primary font-sans transition-colors duration-300 flex flex-col justify-between p-4 sm:p-8 max-w-5xl mx-auto w-full">
+  <div
+    class="min-h-screen bg-theme-bg text-theme-primary font-sans transition-colors duration-300 flex flex-col justify-between p-4 sm:p-8 max-w-5xl mx-auto w-full"
+  >
     <!-- Header -->
-    <header class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+    <header
+      class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8"
+    >
       <!-- Logo Group -->
-      <div class="flex items-center gap-3 cursor-pointer select-none group" @click="restart">
-        <div class="w-11 h-11 rounded-xl bg-theme-accent text-stone-900 font-bold font-lao text-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105">
+      <div
+        class="flex items-center gap-3 cursor-pointer select-none group"
+        @click="restart"
+      >
+        <div
+          class="w-11 h-11 rounded-xl bg-theme-accent text-stone-900 font-bold font-lao text-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105"
+        >
           ລ
         </div>
         <div>
-          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-theme-primary">
+          <h1
+            class="text-xl sm:text-2xl font-bold tracking-tight text-theme-primary"
+          >
             LaoType
           </h1>
           <p class="text-xs font-lao text-theme-muted font-medium">
@@ -160,12 +221,18 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
       <!-- Right Header: Theme Switcher & Live Stats -->
       <div class="flex flex-wrap items-center gap-3 sm:gap-5">
         <!-- Theme Switcher Pills -->
-        <div class="flex items-center gap-1.5 bg-theme-surface/70 border border-theme-border-subtle px-2.5 py-1.5 rounded-full backdrop-blur-md">
+        <div
+          class="flex items-center gap-1.5 bg-theme-surface/70 border border-theme-border-subtle px-2.5 py-1.5 rounded-full backdrop-blur-md"
+        >
           <button
             v-for="t in THEME_OPTIONS"
             :key="t.id"
             class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all"
-            :class="currentTheme === t.id ? 'bg-white/10 text-theme-primary font-bold shadow-xs' : 'text-theme-muted hover:text-theme-primary'"
+            :class="
+              currentTheme === t.id
+                ? 'bg-white/10 text-theme-primary font-bold shadow-xs'
+                : 'text-theme-muted hover:text-theme-primary'
+            "
             :title="t.name"
             @click="setTheme(t.id)"
           >
@@ -179,22 +246,49 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
 
         <!-- Live Stats Counters -->
         <div class="flex items-center gap-2">
-          <div class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md">
-            <span class="text-[10px] text-theme-muted uppercase font-bold tracking-wider">WPM</span>
+          <div
+            class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md"
+          >
+            <span
+              class="text-[10px] text-theme-muted uppercase font-bold tracking-wider"
+              >WPM</span
+            >
             <span class="text-base font-bold text-theme-accent">{{ wpm }}</span>
           </div>
-          <div class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md">
-            <span class="text-[10px] text-theme-muted uppercase font-bold tracking-wider">ACC</span>
-            <span class="text-base font-bold text-theme-accent">{{ accuracy }}%</span>
+          <div
+            class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md"
+          >
+            <span
+              class="text-[10px] text-theme-muted uppercase font-bold tracking-wider"
+              >ACC</span
+            >
+            <span class="text-base font-bold text-theme-accent"
+              >{{ accuracy }}%</span
+            >
           </div>
-          <div v-if="mode === 'time'" class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md">
-            <span class="text-[10px] text-theme-muted uppercase font-bold tracking-wider">TIME</span>
-            <span class="text-base font-bold" :class="timeLeft <= 5 ? 'text-red-400' : 'text-theme-accent'">
+          <div
+            v-if="mode === 'time'"
+            class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md"
+          >
+            <span
+              class="text-[10px] text-theme-muted uppercase font-bold tracking-wider"
+              >TIME</span
+            >
+            <span
+              class="text-base font-bold"
+              :class="timeLeft <= 5 ? 'text-red-400' : 'text-theme-accent'"
+            >
               {{ timeLeft }}s
             </span>
           </div>
-          <div v-else class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md">
-            <span class="text-[10px] text-theme-muted uppercase font-bold tracking-wider">WORD</span>
+          <div
+            v-else
+            class="flex items-baseline gap-1 bg-theme-surface/70 border border-theme-border-subtle px-3 py-1.5 rounded-full font-mono backdrop-blur-md"
+          >
+            <span
+              class="text-[10px] text-theme-muted uppercase font-bold tracking-wider"
+              >WORD</span
+            >
             <span class="text-base font-bold text-theme-accent">
               {{ currentWordIndex }}/{{ wordLimit }}
             </span>
@@ -206,19 +300,31 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
     <!-- Main Content -->
     <main class="my-auto">
       <!-- Controls Bar (Modes & Options) -->
-      <section v-if="status !== 'finished'" class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 bg-theme-surface/80 border border-theme-border-subtle backdrop-blur-xl px-4 py-1.5 rounded-full w-fit mx-auto mb-8 shadow-xl" aria-label="Typing options">
+      <section
+        v-if="status !== 'finished'"
+        class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 bg-theme-surface/80 border border-theme-border-subtle backdrop-blur-xl px-4 py-1.5 rounded-full w-fit mx-auto mb-8 shadow-xl"
+        aria-label="Typing options"
+      >
         <!-- Mode selector -->
         <div class="flex items-center gap-1">
           <button
             class="px-3 py-1 text-xs sm:text-sm font-semibold font-mono rounded-full transition-all cursor-pointer"
-            :class="mode === 'time' ? 'bg-theme-accent text-stone-900 font-bold shadow-md' : 'text-theme-muted hover:text-theme-primary'"
+            :class="
+              mode === 'time'
+                ? 'bg-theme-accent text-stone-900 font-bold shadow-md'
+                : 'text-theme-muted hover:text-theme-primary'
+            "
             @click="setMode('time')"
           >
             ເວລາ (Time)
           </button>
           <button
             class="px-3 py-1 text-xs sm:text-sm font-semibold font-mono rounded-full transition-all cursor-pointer"
-            :class="mode === 'words' ? 'bg-theme-accent text-stone-900 font-bold shadow-md' : 'text-theme-muted hover:text-theme-primary'"
+            :class="
+              mode === 'words'
+                ? 'bg-theme-accent text-stone-900 font-bold shadow-md'
+                : 'text-theme-muted hover:text-theme-primary'
+            "
             @click="setMode('words')"
           >
             ຄຳສັບ (Words)
@@ -233,7 +339,11 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
             v-for="t in [15, 30, 60] as TimeOption[]"
             :key="t"
             class="px-2.5 py-1 text-xs sm:text-sm font-semibold font-mono rounded-full transition-all cursor-pointer"
-            :class="timeLimit === t ? 'bg-theme-accent text-stone-900 font-bold shadow-md' : 'text-theme-muted hover:text-theme-primary'"
+            :class="
+              timeLimit === t
+                ? 'bg-theme-accent text-stone-900 font-bold shadow-md'
+                : 'text-theme-muted hover:text-theme-primary'
+            "
             @click="setTimeLimit(t)"
           >
             {{ t }}s
@@ -245,7 +355,11 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
             v-for="w in [10, 25, 50] as WordOption[]"
             :key="w"
             class="px-2.5 py-1 text-xs sm:text-sm font-semibold font-mono rounded-full transition-all cursor-pointer"
-            :class="wordLimit === w ? 'bg-theme-accent text-stone-900 font-bold shadow-md' : 'text-theme-muted hover:text-theme-primary'"
+            :class="
+              wordLimit === w
+                ? 'bg-theme-accent text-stone-900 font-bold shadow-md'
+                : 'text-theme-muted hover:text-theme-primary'
+            "
             @click="setWordLimit(w)"
           >
             {{ w }}
@@ -257,20 +371,26 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
       <section
         v-if="status !== 'finished'"
         class="relative bg-theme-card border rounded-2xl p-6 sm:p-10 min-h-[220px] flex flex-col justify-center backdrop-blur-2xl shadow-2xl transition-all outline-none cursor-text"
-        :class="isFocused ? 'border-theme-border shadow-theme-accent/5' : 'border-theme-border-subtle'"
+        :class="
+          isFocused
+            ? 'border-theme-border shadow-theme-accent/5'
+            : 'border-theme-border-subtle'
+        "
         @click="focusInput"
       >
-        <!-- Hidden input for mobile & desktop keyboards -->
+        <!-- Hidden input for mobile & desktop keyboards.
+             No :value binding: the engine writes to it directly (see watch(currentInput)). -->
         <input
           ref="inputRef"
           type="text"
+          lang="lo"
           class="absolute opacity-0 pointer-events-none left-0 top-0"
-          :value="currentInput"
           autocomplete="off"
           autocorrect="off"
           autocapitalize="off"
           spellcheck="false"
           @input="handleInput"
+          @compositionend="handleCompositionEnd"
           @keydown="handleKeydown"
           @focus="isFocused = true"
           @blur="handleBlur"
@@ -287,52 +407,88 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
         </div>
 
         <!-- Words Stream -->
-        <div ref="wordsDisplayRef" class="flex flex-wrap gap-x-4 gap-y-2 font-lao text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden">
+        <div
+          ref="wordsDisplayRef"
+          lang="lo"
+          class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-lao text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+        >
           <span
             v-for="(word, wIdx) in words"
             :key="wIdx"
             class="relative inline-block transition-colors rounded-xs"
             :class="{
               'active-word': wIdx === currentWordIndex,
-              'text-theme-subtle': wIdx > currentWordIndex
+              'text-theme-subtle': wIdx > currentWordIndex,
             }"
           >
             <!-- Previously completed word -->
             <template v-if="wIdx < currentWordIndex">
               <span
-                :class="wordHistory[wIdx]?.isCorrect ? 'text-theme-correct' : 'text-theme-incorrect'"
+                v-if="wordHistory[wIdx]?.isCorrect"
+                class="text-theme-correct"
+                >{{ word }}</span
               >
-                {{ word }}
-              </span>
+
+              <!-- Incorrect word: colour per cluster so the user can see exactly what was wrong -->
+              <template v-else-if="historyView(wIdx)">
+                <span
+                  v-for="(c, ci) in historyView(wIdx)!.clusters"
+                  :key="ci"
+                  :class="
+                    c.state === 'correct'
+                      ? 'text-theme-correct'
+                      : 'text-theme-incorrect'
+                  "
+                  >{{ c.text }}</span
+                >
+                <span
+                  v-if="historyView(wIdx)!.extra"
+                  class="text-theme-incorrect"
+                  >{{ historyView(wIdx)!.extra }}</span
+                >
+              </template>
+
+              <span v-else class="text-theme-incorrect">{{ word }}</span>
             </template>
 
-            <!-- Currently active word -->
+            <!-- Currently active word: one <span> per cluster (consonant + its vowel/tone marks) -->
             <template v-else-if="wIdx === currentWordIndex">
-              <!-- Base target word placeholder -->
-              <span class="text-theme-subtle select-none">{{ word }}</span>
-
-              <!-- Caret when user hasn't typed anything yet -->
-              <span
-                v-if="isFocused && !currentInput"
-                class="absolute -left-[2px] top-[0.15em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse pointer-events-none shadow-[0_0_8px_var(--color-theme-accent)]"
-              />
-
-              <!-- Overlay of typed characters -->
-              <span
-                v-if="currentInput"
-                class="absolute left-0 top-0 whitespace-nowrap pointer-events-none select-none"
-              >
-                <span class="text-theme-correct">{{ activeWordBreakdown.matched }}</span>
+              <template v-for="(c, ci) in activeWordView.clusters" :key="ci">
+                <!-- Zero-width wrapper so the caret never shifts the text -->
                 <span
-                  v-if="activeWordBreakdown.mismatched"
-                  class="text-theme-incorrect"
+                  v-if="isFocused && ci === caretIndex"
+                  class="relative inline-block w-0 align-baseline pointer-events-none"
                 >
-                  {{ activeWordBreakdown.mismatched }}
+                  <span
+                    class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"
+                  />
                 </span>
-                <!-- Caret following cursor -->
+                <span class="relative inline-block">
+                  <!-- Base layer: the whole cluster, drawn once so the font shapes it correctly -->
+                  <span :class="clusterClass(c.state)">{{ c.text }}</span>
+                  <!-- Overlay: only the part the user has typed so far (e.g. "ຮ" of "ຮ້") -->
+                  <span
+                    v-if="c.state === 'partial'"
+                    class="absolute left-0 top-0 text-theme-correct pointer-events-none"
+                    >{{ c.doneText }}</span
+                  >
+                </span>
+              </template>
+
+              <!-- Characters typed beyond the end of the word -->
+              <span v-if="activeWordView.extra" class="text-theme-incorrect">{{
+                activeWordView.extra
+              }}</span>
+
+              <!-- Caret at the end of the word -->
+              <span
+                v-if="
+                  isFocused && caretIndex === activeWordView.clusters.length
+                "
+                class="relative inline-block w-0 align-baseline pointer-events-none"
+              >
                 <span
-                  v-if="isFocused"
-                  class="inline-block w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse align-middle -mt-0.5 ml-[1px] shadow-[0_0_8px_var(--color-theme-accent)]"
+                  class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"
                 />
               </span>
             </template>
@@ -346,61 +502,115 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
       </section>
 
       <!-- Action buttons -->
-      <div v-if="status !== 'finished'" class="flex justify-center items-center gap-3 mt-6">
+      <div
+        v-if="status !== 'finished'"
+        class="flex justify-center items-center gap-3 mt-6"
+      >
         <button
           class="flex items-center gap-2 px-5 py-2 rounded-full bg-theme-surface/70 hover:bg-theme-surface border border-theme-border-subtle hover:border-theme-border text-theme-muted hover:text-theme-primary text-sm font-medium transition-all hover:-translate-y-0.5 cursor-pointer shadow-md"
           @click="restart"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
             <path d="M21 3v5h-5" />
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
             <path d="M8 16H3v5" />
           </svg>
           <span class="font-lao">ເລີ່ມໃໝ່</span>
-          <span class="font-mono text-[11px] bg-white/10 px-1.5 py-0.5 rounded text-theme-muted">Tab</span>
+          <span
+            class="font-mono text-[11px] bg-white/10 px-1.5 py-0.5 rounded text-theme-muted"
+            >Tab</span
+          >
         </button>
       </div>
 
       <!-- Results View -->
-      <section v-if="status === 'finished'" class="bg-theme-card border border-theme-border/40 rounded-2xl p-6 sm:p-10 backdrop-blur-2xl text-center max-w-xl mx-auto shadow-2xl transition-all">
-        <h2 class="text-xs uppercase tracking-widest text-theme-accent font-bold font-lao mb-6">
+      <section
+        v-if="status === 'finished'"
+        class="bg-theme-card border border-theme-border/40 rounded-2xl p-6 sm:p-10 backdrop-blur-2xl text-center max-w-xl mx-auto shadow-2xl transition-all"
+      >
+        <h2
+          class="text-xs uppercase tracking-widest text-theme-accent font-bold font-lao mb-6"
+        >
           ຜົນການທົດສອບ (Results)
         </h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-4 flex flex-col gap-1">
-            <span class="font-mono text-4xl sm:text-5xl font-extrabold text-theme-accent">{{ wpm }}</span>
-            <span class="text-xs text-theme-muted uppercase tracking-wider font-semibold">WPM (ຄຳ/ນາທີ)</span>
+          <div
+            class="bg-white/[0.03] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
+          >
+            <span
+              class="font-mono text-4xl sm:text-5xl font-extrabold text-theme-accent"
+              >{{ wpm }}</span
+            >
+            <span
+              class="text-xs text-theme-muted uppercase tracking-wider font-semibold"
+              >WPM (ຄຳ/ນາທີ)</span
+            >
           </div>
 
-          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-4 flex flex-col gap-1">
-            <span class="font-mono text-4xl sm:text-5xl font-bold text-theme-primary">{{ accuracy }}%</span>
-            <span class="text-xs text-theme-muted uppercase tracking-wider font-semibold">ຄວາມຖືກຕ້ອງ</span>
+          <div
+            class="bg-white/[0.03] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
+          >
+            <span
+              class="font-mono text-4xl sm:text-5xl font-bold text-theme-primary"
+              >{{ accuracy }}%</span
+            >
+            <span
+              class="text-xs text-theme-muted uppercase tracking-wider font-semibold"
+              >ຄວາມຖືກຕ້ອງ</span
+            >
           </div>
 
-          <div class="bg-white/[0.03] border border-white/5 rounded-xl p-4 flex flex-col gap-1">
-            <span class="font-mono text-4xl sm:text-5xl font-bold text-theme-primary">{{ cpm }}</span>
-            <span class="text-xs text-theme-muted uppercase tracking-wider font-semibold">CPM (ອັກສອນ/ນາທີ)</span>
+          <div
+            class="bg-white/[0.03] border border-white/5 rounded-xl p-4 flex flex-col gap-1"
+          >
+            <span
+              class="font-mono text-4xl sm:text-5xl font-bold text-theme-primary"
+              >{{ cpm }}</span
+            >
+            <span
+              class="text-xs text-theme-muted uppercase tracking-wider font-semibold"
+              >CPM (ອັກສອນ/ນາທີ)</span
+            >
           </div>
         </div>
 
-        <div class="flex justify-center gap-6 mb-8 text-sm text-theme-muted font-mono">
+        <div
+          class="flex justify-center gap-6 mb-8 text-sm text-theme-muted font-mono"
+        >
           <div>
             <span>ຄຳທີ່ຖືກ: </span>
-            <span class="text-theme-correct font-semibold">{{ correctWordsCount }}</span>
+            <span class="text-theme-correct font-semibold">{{
+              correctWordsCount
+            }}</span>
           </div>
           <div>
             <span>ຄຳທີ່ຜິດ: </span>
-            <span class="text-theme-incorrect font-semibold">{{ incorrectWordsCount }}</span>
+            <span class="text-theme-incorrect font-semibold">{{
+              incorrectWordsCount
+            }}</span>
           </div>
           <div>
             <span>ເວລາ: </span>
-            <span class="text-theme-primary font-semibold">{{ elapsedSeconds }}s</span>
+            <span class="text-theme-primary font-semibold"
+              >{{ elapsedSeconds }}s</span
+            >
           </div>
           <div>
             <span>ກົດແປ້ນ: </span>
-            <span class="text-theme-primary font-semibold">{{ totalKeystrokes }}</span>
+            <span class="text-theme-primary font-semibold">{{
+              totalKeystrokes
+            }}</span>
           </div>
         </div>
 
@@ -415,9 +625,7 @@ const incorrectWordsCount = computed(() => wordHistory.value.filter(w => !w.isCo
 
     <!-- Footer -->
     <footer class="text-center text-theme-muted text-xs font-lao mt-8">
-      <p>
-        LaoType — ລະບົບຝຶກພິມພາສາລາວອອນລາຍ • ຮອງຮັບແປ້ນພິມພາສາລາວມາດຕະຖານ
-      </p>
+      <p>LaoType — ລະບົບຝຶກພິມພາສາລາວອອນລາຍ • ຮອງຮັບແປ້ນພິມພາສາລາວມາດຕະຖານ</p>
     </footer>
   </div>
 </template>
