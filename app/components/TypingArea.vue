@@ -147,7 +147,7 @@ defineExpose({
     <div
       ref="wordsDisplayRef"
       lang="lo"
-      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-phetsarath font-semibold text-2xl sm:text-3xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-phetsarath font-semibold text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
     >
       <span
         v-for="(word, wIdx) in words"
