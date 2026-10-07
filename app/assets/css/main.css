@@ -1,0 +1,118 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@100..900&display=swap');
+@import "tailwindcss";
+
+@layer base {
+  :root, [data-theme="coffee"] {
+    --theme-bg: #1c1917;
+    --theme-surface: #292524;
+    --theme-card: rgba(41, 37, 36, 0.85);
+    --theme-border: rgba(234, 179, 8, 0.2);
+    --theme-border-subtle: rgba(255, 255, 255, 0.08);
+
+    --theme-accent: #eab308;
+    --theme-accent-hover: #facc15;
+    --theme-accent-glow: rgba(234, 179, 8, 0.3);
+
+    --theme-text-primary: #fef3c7;
+    --theme-text-muted: #a8a29e;
+    --theme-text-subtle: #57534e;
+
+    --theme-correct: #fef08a;
+    --theme-incorrect: #f87171;
+    --theme-extra: #fb7185;
+  }
+
+  [data-theme="cyber"] {
+    --theme-bg: #0d1117;
+    --theme-surface: #161b22;
+    --theme-card: rgba(22, 27, 34, 0.85);
+    --theme-border: rgba(6, 182, 212, 0.3);
+    --theme-border-subtle: rgba(255, 255, 255, 0.08);
+
+    --theme-accent: #06b6d4;
+    --theme-accent-hover: #22d3ee;
+    --theme-accent-glow: rgba(6, 182, 212, 0.3);
+
+    --theme-text-primary: #f0f6fc;
+    --theme-text-muted: #64748b;
+    --theme-text-subtle: #475569;
+
+    --theme-correct: #38bdf8;
+    --theme-incorrect: #f43f5e;
+    --theme-extra: #fb7185;
+  }
+
+  [data-theme="midnight"] {
+    --theme-bg: #0f0d1a;
+    --theme-surface: #1a162b;
+    --theme-card: rgba(26, 22, 43, 0.85);
+    --theme-border: rgba(168, 85, 247, 0.3);
+    --theme-border-subtle: rgba(255, 255, 255, 0.08);
+
+    --theme-accent: #a855f7;
+    --theme-accent-hover: #c084fc;
+    --theme-accent-glow: rgba(168, 85, 247, 0.3);
+
+    --theme-text-primary: #f3e8ff;
+    --theme-text-muted: #94a3b8;
+    --theme-text-subtle: #475569;
+
+    --theme-correct: #c084fc;
+    --theme-incorrect: #f43f5e;
+    --theme-extra: #fb7185;
+  }
+}
+
+@theme {
+  --font-lao: 'Noto Sans Lao', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --color-theme-bg: var(--theme-bg);
+  --color-theme-surface: var(--theme-surface);
+  --color-theme-card: var(--theme-card);
+  --color-theme-border: var(--theme-border);
+  --color-theme-border-subtle: var(--theme-border-subtle);
+  
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-accent-hover: var(--theme-accent-hover);
+  --color-theme-accent-glow: var(--theme-accent-glow);
+
+  --color-theme-primary: var(--theme-text-primary);
+  --color-theme-muted: var(--theme-text-muted);
+  --color-theme-subtle: var(--theme-text-subtle);
+
+  --color-theme-correct: var(--theme-correct);
+  --color-theme-incorrect: var(--theme-incorrect);
+  --color-theme-extra: var(--theme-extra);
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--theme-bg);
+  color: var(--theme-text-primary);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Caret Blinking Animation */
+@keyframes caretBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.caret-pulse {
+  animation: caretBlink 1.1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Lao Font Rule */
+.font-lao,
+.font-lao * {
+  font-family: 'Noto Sans Lao', system-ui, sans-serif !important;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
