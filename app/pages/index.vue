@@ -32,6 +32,8 @@ const {
   cpm,
   accuracy,
   totalKeystrokes,
+  combo,
+  maxCombo,
   activeWordView,
   nextExpectedCharInfo,
   initTest,
@@ -115,7 +117,9 @@ function handleGlobalKeydown(e: KeyboardEvent) {
 }
 
 onMounted(() => {
-  initTest();
+  if (words.value.length === 0) {
+    initTest();
+  }
   nextTick(() => {
     focusInput();
   });
@@ -173,6 +177,7 @@ const incorrectWordsCount = computed(
           :current-word-index="currentWordIndex"
           :current-input="currentInput"
           :word-history="wordHistory"
+          :combo="combo"
           :active-word-view="activeWordView"
           @input="handleInput"
           @compositionend="handleCompositionEnd"
@@ -180,12 +185,14 @@ const incorrectWordsCount = computed(
         />
 
         <!-- Visual Keyboard -->
-        <VisualKeyboard
-          :next-char="nextExpectedCharInfo?.char"
-          :target-char="nextExpectedCharInfo?.targetChar"
-          :is-error="nextExpectedCharInfo?.isError"
-          :is-space="nextExpectedCharInfo?.isSpace"
-        />
+        <ClientOnly>
+          <VisualKeyboard
+            :next-char="nextExpectedCharInfo?.char"
+            :target-char="nextExpectedCharInfo?.targetChar"
+            :is-error="nextExpectedCharInfo?.isError"
+            :is-space="nextExpectedCharInfo?.isSpace"
+          />
+        </ClientOnly>
 
         <!-- Action buttons -->
         <RestartButton @restart="requestRestart" />
@@ -201,6 +208,7 @@ const incorrectWordsCount = computed(
         :incorrect-words-count="incorrectWordsCount"
         :elapsed-seconds="elapsedSeconds"
         :total-keystrokes="totalKeystrokes"
+        :max-combo="maxCombo"
         @restart="restart"
       />
     </main>

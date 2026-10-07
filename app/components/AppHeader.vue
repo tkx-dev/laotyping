@@ -71,6 +71,9 @@ const emit = defineEmits<{
         </button>
       </div>
 
+      <!-- Sound Settings -->
+      <SoundSettings />
+
       <!-- Live Stats Counters -->
       <div class="flex items-center gap-2">
         <div

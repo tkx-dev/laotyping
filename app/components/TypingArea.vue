@@ -3,21 +3,27 @@ import { ref, computed, watch, nextTick } from "vue";
 import type { WordHistory } from "../composables/useTypingEngine";
 import { buildClusterView, type CharState } from "../utils/lao";
 
-const props = defineProps<{
-  words: string[];
-  currentWordIndex: number;
-  currentInput: string;
-  wordHistory: WordHistory[];
-  activeWordView: {
-    clusters: {
-      text: string;
-      state: CharState;
-      doneText?: string;
-      typedText?: string;
-    }[];
-    extra: string;
-  };
-}>();
+const props = withDefaults(
+  defineProps<{
+    words: string[];
+    currentWordIndex: number;
+    currentInput: string;
+    wordHistory: WordHistory[];
+    combo?: number;
+    activeWordView: {
+      clusters: {
+        text: string;
+        state: CharState;
+        doneText?: string;
+        typedText?: string;
+      }[];
+      extra: string;
+    };
+  }>(),
+  {
+    combo: 0,
+  },
+);
 
 const emit = defineEmits<{
   (e: "input", event: Event): void;
@@ -132,6 +138,29 @@ defineExpose({
       @focus="isFocused = true"
       @blur="handleBlur"
     />
+
+    <!-- Dynamic Combo Streak Badge -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0 scale-75 -translate-y-1"
+      enter-to-class="opacity-100 scale-100 translate-y-0"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100 scale-100"
+      leave-to-class="opacity-0 scale-75"
+    >
+      <div
+        v-if="combo && combo >= 5"
+        class="absolute top-3 right-4 sm:top-4 sm:right-6 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-theme-surface/90 border border-theme-accent/40 shadow-lg backdrop-blur-md select-none pointer-events-none"
+      >
+        <span class="animate-pulse text-xs">🔥</span>
+        <span class="font-mono text-xs font-black tracking-wider text-theme-accent">
+          {{ combo }}
+        </span>
+        <span class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight">
+          Streak
+        </span>
+      </div>
+    </Transition>
 
     <!-- Unfocused Prompt Overlay -->
     <div

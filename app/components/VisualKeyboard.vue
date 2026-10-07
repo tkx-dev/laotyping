@@ -101,14 +101,24 @@ const guideMessage = computed(() => {
 });
 
 function handlePhysicalKeyDown(e: KeyboardEvent) {
+  // Ignore shortcut key combinations (e.g. Cmd+R, Ctrl+R) to avoid stuck keys
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
   pressedKeyCodes.value.add(e.code);
 }
 
 function handlePhysicalKeyUp(e: KeyboardEvent) {
   pressedKeyCodes.value.delete(e.code);
+  // macOS Chrome suppresses keyup events while Command is held; clear on modifier release
+  if (e.key === "Meta" || e.key === "Control" || e.key === "Alt") {
+    pressedKeyCodes.value.clear();
+  }
 }
 
 function handleWindowBlur() {
+  pressedKeyCodes.value.clear();
+}
+
+function handleWindowFocus() {
   pressedKeyCodes.value.clear();
 }
 
@@ -116,12 +126,14 @@ onMounted(() => {
   window.addEventListener("keydown", handlePhysicalKeyDown);
   window.addEventListener("keyup", handlePhysicalKeyUp);
   window.addEventListener("blur", handleWindowBlur);
+  window.addEventListener("focus", handleWindowFocus);
 });
 
 onUnmounted(() => {
   window.removeEventListener("keydown", handlePhysicalKeyDown);
   window.removeEventListener("keyup", handlePhysicalKeyUp);
   window.removeEventListener("blur", handleWindowBlur);
+  window.removeEventListener("focus", handleWindowFocus);
 });
 
 function isKeyActive(key: KeyDefinition): boolean {
