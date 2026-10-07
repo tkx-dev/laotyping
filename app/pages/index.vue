@@ -14,9 +14,7 @@ useHead({
     },
     { name: "viewport", content: "width=device-width, initial-scale=1.0" },
   ],
-  link: [
-    { rel: "icon", type: "image/svg+xml", href: "/favicon.ico" },
-  ],
+  link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.ico" }],
 });
 
 const {
@@ -35,6 +33,7 @@ const {
   accuracy,
   totalKeystrokes,
   activeWordView,
+  nextExpectedCharInfo,
   initTest,
   handleInput,
   handleCompositionEnd,
@@ -180,6 +179,14 @@ const incorrectWordsCount = computed(
           @keydown="handleKeydown"
         />
 
+        <!-- Visual Keyboard -->
+        <VisualKeyboard
+          :next-char="nextExpectedCharInfo?.char"
+          :target-char="nextExpectedCharInfo?.targetChar"
+          :is-error="nextExpectedCharInfo?.isError"
+          :is-space="nextExpectedCharInfo?.isSpace"
+        />
+
         <!-- Action buttons -->
         <RestartButton @restart="requestRestart" />
       </template>
@@ -202,7 +209,7 @@ const incorrectWordsCount = computed(
     <AppFooter />
 
     <!-- Restart Confirmation Modal -->
-    <ConfirmDialog
+    <CommonConfirmDialog
       :is-open="showRestartConfirm"
       title="ຢືນຢັນການເລີ່ມໃໝ່"
       message="ທ່ານຕ້ອງການປ່ຽນຊຸດຂໍ້ຄວາມ ແລະ ເລີ່ມຕົ້ນໃໝ່ແທ້ບໍ່? ຄວາມຄືບໜ້າໃນປະຈຸບັນຈະບໍ່ຖືກບັນທຶກ."

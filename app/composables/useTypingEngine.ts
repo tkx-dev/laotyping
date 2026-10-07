@@ -18,6 +18,13 @@ export interface WordHistory {
   isCorrect: boolean;
 }
 
+export interface NextExpectedCharInfo {
+  char: string;
+  targetChar: string;
+  isError: boolean;
+  isSpace: boolean;
+}
+
 const MAX_EXTRA_CHARS = 8; // how many chars past the end of a word the user may type
 const TICK_MS = 200;
 
@@ -177,6 +184,45 @@ export function useTypingEngine() {
     buildClusterView(currentTarget(), currentInput.value),
   );
 
+  // Next expected character for visual keyboard & hand guidance
+  const nextExpectedCharInfo = computed<NextExpectedCharInfo | null>(() => {
+    if (status.value === "finished") return null;
+    const target = currentTarget();
+    if (!target) return null;
+    const targetCps = toCps(target);
+    const inputCps = toCps(currentInput.value);
+    const p = commonPrefixLen(targetCps, inputCps);
+
+    // If there are extra/wrong characters typed, prompt Backspace
+    if (inputCps.length > p) {
+      return {
+        char: "Backspace",
+        targetChar: targetCps[p] ?? " ",
+        isError: true,
+        isSpace: false,
+      };
+    }
+
+    // If whole word is typed correctly, prompt Space to advance
+    if (p === targetCps.length) {
+      return {
+        char: " ",
+        targetChar: " ",
+        isError: false,
+        isSpace: true,
+      };
+    }
+
+    // Next character in current target word
+    const nextCh = targetCps[p];
+    return {
+      char: nextCh,
+      targetChar: nextCh,
+      isError: false,
+      isSpace: false,
+    };
+  });
+
   /**
    * Count keystrokes by DIFFING previous vs new normalized input
    * (works for paste, IME, tone/vowel typed in either order, fast typing...).
@@ -323,6 +369,7 @@ export function useTypingEngine() {
     correctKeystrokes,
     incorrectKeystrokes,
     activeWordView, // NEW: [{ text, state }] per cluster + extra chars
+    nextExpectedCharInfo, // Next character and finger guide
     initTest,
     handleInput,
     handleCompositionEnd, // NEW: bind to @compositionend
