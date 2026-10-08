@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { getRandomLaoWords } from "../data/words";
 import { getRandomEnglishWords } from "../data/englishWords";
 import {
@@ -32,20 +32,41 @@ const MAX_EXTRA_CHARS = 8; // how many chars past the end of a word the user may
 const TICK_MS = 200;
 
 export function useTypingEngine() {
-  const language = useState<TypingLanguage>("typing_engine_language", () => "lao");
+  const langCookie = useCookie<TypingLanguage>("laotype_language", {
+    default: () => "lao",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  const language = useState<TypingLanguage>("typing_engine_language", () => {
+    if (langCookie.value === "lao" || langCookie.value === "english") {
+      return langCookie.value;
+    }
+    return "lao";
+  });
   const mode = ref<TestMode>("time");
   const timeLimit = ref<TimeOption>(30);
   const wordLimit = ref<WordOption>(25);
 
-  // Restore language preference from localStorage on client
-  if (import.meta.client) {
+  // Restore language preference safely in onMounted to prevent SSR hydration mismatches
+  onMounted(() => {
     try {
       const savedLang = localStorage.getItem("laotype_language") as TypingLanguage | null;
-      if (savedLang === "lao" || savedLang === "english") {
-        language.value = savedLang;
+      if (
+        savedLang &&
+        (savedLang === "lao" || savedLang === "english") &&
+        savedLang !== language.value
+      ) {
+        setLanguage(savedLang);
+      } else if (
+        savedLang &&
+        (savedLang === "lao" || savedLang === "english") &&
+        langCookie.value !== savedLang
+      ) {
+        langCookie.value = savedLang;
       }
     } catch {}
-  }
+  });
 
   const status = ref<EngineStatus>("idle");
   const words = useState<string[]>("typing_engine_words", () => []);
@@ -396,6 +417,7 @@ export function useTypingEngine() {
   function setLanguage(newLanguage: TypingLanguage) {
     if (language.value === newLanguage) return;
     language.value = newLanguage;
+    langCookie.value = newLanguage;
     if (import.meta.client) {
       try {
         localStorage.setItem("laotype_language", newLanguage);

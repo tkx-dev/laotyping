@@ -25,6 +25,7 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#1c1917' },
         { name: 'color-scheme', content: 'dark' },
         { name: 'apple-mobile-web-app-title', content: 'LaoType' },
+        { name: 'mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'black-translucent' },
         { name: 'robots', content: 'index, follow' },
