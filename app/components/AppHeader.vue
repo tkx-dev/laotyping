@@ -29,9 +29,14 @@ const emit = defineEmits<{
       @click="emit('restart')"
     >
       <div
-        class="w-11 h-11 rounded-xl bg-theme-accent text-stone-900 font-bold font-lao text-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105"
+        class="relative w-11 h-11 rounded-xl bg-theme-surface border border-theme-border/80 flex items-center justify-center shadow-lg transition-all group-hover:scale-105 group-hover:border-theme-accent group-hover:shadow-[0_0_16px_var(--color-theme-accent-glow)] overflow-hidden"
       >
-        ລ
+        <!-- Tactile Keycap Dish -->
+        <div class="absolute inset-1 rounded-lg bg-white/[0.05] border border-white/10" />
+        <span class="relative font-bold font-lao text-2xl text-theme-accent">
+          ລ
+        </span>
+        <span class="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-theme-accent/80" />
       </div>
       <div>
         <h1

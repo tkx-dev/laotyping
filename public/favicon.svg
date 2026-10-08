@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="favBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#292524" />
+      <stop offset="100%" stop-color="#141211" />
+    </linearGradient>
+    <linearGradient id="favGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#facc15" />
+      <stop offset="100%" stop-color="#eab308" />
+    </linearGradient>
+  </defs>
+
+  <!-- Keycap base -->
+  <rect x="2" y="2" width="28" height="28" rx="7" fill="url(#favBg)" stroke="#eab308" stroke-width="1.5" />
+  <!-- Keycap dish -->
+  <rect x="5" y="4.5" width="22" height="22" rx="5" fill="#3b3531" />
+
+  <!-- Bold Lao 'ລ' for 32x32 readability -->
+  <text
+    x="16"
+    y="21"
+    font-family="'Phetsarath OT', 'Phetsarath', sans-serif"
+    font-size="16"
+    font-weight="bold"
+    fill="url(#favGold)"
+    text-anchor="middle"
+    dominant-baseline="central"
+  >ລ</text>
+</svg>
