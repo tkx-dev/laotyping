@@ -29,9 +29,14 @@ const emit = defineEmits<{
       @click="emit('restart')"
     >
       <div
-        class="w-11 h-11 rounded-xl bg-theme-accent text-stone-900 font-bold font-lao text-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-105"
+        class="relative w-11 h-11 rounded-xl bg-theme-surface border border-theme-border/80 flex items-center justify-center shadow-lg transition-all group-hover:scale-105 group-hover:border-theme-accent group-hover:shadow-[0_0_16px_var(--color-theme-accent-glow)] overflow-hidden"
       >
-        ລ
+        <!-- Tactile Keycap Dish -->
+        <div class="absolute inset-1 rounded-lg bg-white/[0.05] border border-white/10" />
+        <span class="relative font-bold font-lao text-2xl text-theme-accent">
+          ລ
+        </span>
+        <span class="absolute bottom-1 right-1 w-1.5 h-1.5 rounded-full bg-theme-accent/80" />
       </div>
       <div>
         <h1
@@ -40,7 +45,7 @@ const emit = defineEmits<{
           LaoType
         </h1>
         <p class="text-xs font-lao text-theme-muted font-medium">
-          ຝຶກພິມດີດພາສາລາວ
+          ເວັບໄຊຝຶກພິມດີດພາສາລາວ
         </p>
       </div>
     </div>
@@ -54,20 +59,22 @@ const emit = defineEmits<{
         <button
           v-for="t in themeOptions"
           :key="t.id"
-          class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer"
+          type="button"
+          class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer select-none"
           :class="
             currentTheme === t.id
               ? 'bg-white/10 text-theme-primary font-bold shadow-xs'
               : 'text-theme-muted hover:text-theme-primary'
           "
           :title="t.name"
+          @mousedown.prevent
           @click="emit('selectTheme', t.id)"
         >
           <span
-            class="w-2.5 h-2.5 rounded-full"
+            class="w-2.5 h-2.5 rounded-full pointer-events-none"
             :style="{ backgroundColor: t.dotColor }"
           />
-          <span class="hidden md:inline">{{ t.name }}</span>
+          <span class="hidden md:inline pointer-events-none">{{ t.name }}</span>
         </button>
       </div>
 

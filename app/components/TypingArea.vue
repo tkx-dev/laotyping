@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
-import type { WordHistory } from "../composables/useTypingEngine";
+import type {
+  TypingLanguage,
+  WordHistory,
+} from "../composables/useTypingEngine";
 import { buildClusterView, type CharState } from "../utils/lao";
 
 const props = withDefaults(
@@ -10,6 +13,7 @@ const props = withDefaults(
     currentInput: string;
     wordHistory: WordHistory[];
     combo?: number;
+    language?: TypingLanguage;
     activeWordView: {
       clusters: {
         text: string;
@@ -22,6 +26,7 @@ const props = withDefaults(
   }>(),
   {
     combo: 0,
+    language: "lao",
   },
 );
 
@@ -126,7 +131,7 @@ defineExpose({
     <input
       ref="inputRef"
       type="text"
-      lang="lo"
+      :lang="language === 'english' ? 'en' : 'lo'"
       class="absolute opacity-0 pointer-events-none left-0 top-0"
       autocomplete="off"
       autocorrect="off"
@@ -153,10 +158,14 @@ defineExpose({
         class="absolute top-3 right-4 sm:top-4 sm:right-6 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-theme-surface/90 border border-theme-accent/40 shadow-lg backdrop-blur-md select-none pointer-events-none"
       >
         <span class="animate-pulse text-xs">🔥</span>
-        <span class="font-mono text-xs font-black tracking-wider text-theme-accent">
+        <span
+          class="font-mono text-xs font-black tracking-wider text-theme-accent"
+        >
           {{ combo }}
         </span>
-        <span class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight">
+        <span
+          class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight"
+        >
           Streak
         </span>
       </div>
@@ -165,18 +174,31 @@ defineExpose({
     <!-- Unfocused Prompt Overlay -->
     <div
       v-if="!isFocused"
-      class="absolute inset-0 flex items-center justify-center bg-stone-950/70 backdrop-blur-xs rounded-2xl z-10 cursor-pointer"
+      class="absolute inset-0 flex items-center justify-center bg-stone-950/70 backdrop-blur-xs rounded-2xl z-10 cursor-pointer select-none"
+      @click.stop="focusInput"
     >
-      <span class="text-theme-accent font-semibold font-phetsarath text-lg">
-        ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ
+      <span
+        class="text-theme-accent font-semibold text-lg"
+        :class="language === 'english' ? 'font-mono text-base sm:text-lg' : 'font-phetsarath text-lg'"
+      >
+        {{
+          language === "english"
+            ? "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ (Click to focus)"
+            : "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ"
+        }}
       </span>
     </div>
 
     <!-- Words Stream -->
     <div
       ref="wordsDisplayRef"
-      lang="lo"
-      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-phetsarath font-semibold text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      :lang="language === 'english' ? 'en' : 'lo'"
+      class="flex flex-wrap gap-x-4 gap-y-2 py-1 text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      :class="
+        language === 'english'
+          ? 'font-mono font-medium tracking-normal'
+          : 'font-phetsarath font-semibold'
+      "
     >
       <span
         v-for="(word, wIdx) in words"
@@ -220,7 +242,7 @@ defineExpose({
             <!-- Zero-width wrapper so the caret never shifts the text -->
             <span
               v-if="isFocused && ci === caretIndex"
-              class="relative inline-block w-0 align-baseline pointer-events-none"
+              class="relative inline-block w-0 h-0 leading-none align-baseline pointer-events-none"
             >
               <span
                 class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"
@@ -254,7 +276,7 @@ defineExpose({
           <!-- Caret at the end of the word -->
           <span
             v-if="isFocused && caretIndex === activeWordView.clusters.length"
-            class="relative inline-block w-0 align-baseline pointer-events-none"
+            class="relative inline-block w-0 h-0 leading-none align-baseline pointer-events-none"
           >
             <span
               class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"

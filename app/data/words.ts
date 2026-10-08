@@ -806,3 +806,10 @@ export function getRandomLaoWords(count: number): string[] {
   }
   return result;
 }
+
+export {
+  ENGLISH_COMMON_WORDS,
+  getRandomEnglishWords,
+  TOTAL_ENGLISH_WORDS_COUNT,
+} from "./englishWords";
+

@@ -1,14 +1,19 @@
 <script setup lang="ts">
-defineProps<{
-  wpm: number;
-  accuracy: number;
-  cpm: number;
-  correctWordsCount: number;
-  incorrectWordsCount: number;
-  elapsedSeconds: number;
-  totalKeystrokes: number;
-  maxCombo?: number;
-}>();
+withDefaults(
+  defineProps<{
+    wpm: number;
+    accuracy: number;
+    cpm: number;
+    correctWordsCount: number;
+    incorrectWordsCount: number;
+    elapsedSeconds: number;
+    totalKeystrokes: number;
+    maxCombo?: number;
+  }>(),
+  {
+    maxCombo: 0,
+  },
+);
 
 const emit = defineEmits<{
   (e: "restart"): void;
@@ -35,7 +40,7 @@ const emit = defineEmits<{
           {{ wpm }}
         </span>
         <span
-          class="text-xs text-theme-muted uppercase tracking-wider font-semibold"
+          class="text-xs text-theme-muted uppercase tracking-wider font-semibold font-lao"
         >
           WPM (ຄຳ/ນາທີ)
         </span>
@@ -50,7 +55,7 @@ const emit = defineEmits<{
           {{ accuracy }}%
         </span>
         <span
-          class="text-xs text-theme-muted uppercase tracking-wider font-semibold"
+          class="text-xs text-theme-muted uppercase tracking-wider font-semibold font-lao"
         >
           ຄວາມຖືກຕ້ອງ
         </span>
@@ -65,7 +70,7 @@ const emit = defineEmits<{
           {{ cpm }}
         </span>
         <span
-          class="text-xs text-theme-muted uppercase tracking-wider font-semibold"
+          class="text-xs text-theme-muted uppercase tracking-wider font-semibold font-lao"
         >
           CPM (ອັກສອນ/ນາທີ)
         </span>
@@ -73,42 +78,42 @@ const emit = defineEmits<{
     </div>
 
     <div
-      class="flex justify-center gap-6 mb-8 text-sm text-theme-muted font-mono"
+      class="flex flex-wrap justify-center gap-4 sm:gap-6 mb-8 text-sm text-theme-muted font-mono"
     >
       <div>
-        <span>ຄຳທີ່ຖືກ: </span>
-        <span class="text-theme-correct font-semibold">
+        <span class="font-lao">ຄຳທີ່ຖືກ: </span>
+        <span class="text-theme-correct font-semibold font-mono">
           {{ correctWordsCount }}
         </span>
       </div>
       <div>
-        <span>ຄຳທີ່ຜິດ: </span>
-        <span class="text-theme-incorrect font-semibold">
+        <span class="font-lao">ຄຳທີ່ຜິດ: </span>
+        <span class="text-theme-incorrect font-semibold font-mono">
           {{ incorrectWordsCount }}
         </span>
       </div>
       <div>
-        <span>ເວລາ: </span>
-        <span class="text-theme-primary font-semibold">
+        <span class="font-lao">ເວລາ: </span>
+        <span class="text-theme-primary font-semibold font-mono">
           {{ elapsedSeconds }}s
         </span>
       </div>
       <div>
-        <span>ກົດແປ້ນ: </span>
-        <span class="text-theme-primary font-semibold">
+        <span class="font-lao">ກົດແປ້ນ: </span>
+        <span class="text-theme-primary font-semibold font-mono">
           {{ totalKeystrokes }}
         </span>
       </div>
       <div v-if="maxCombo && maxCombo > 0">
-        <span>Streak ສູງສຸດ: </span>
-        <span class="text-theme-accent font-semibold">
+        <span class="font-lao">Streak ສູງສຸດ: </span>
+        <span class="text-theme-accent font-semibold font-mono">
           🔥 {{ maxCombo }}
         </span>
       </div>
     </div>
 
     <button
-      class="px-8 py-3 rounded-full bg-theme-accent hover:bg-theme-accent-hover text-stone-900 font-lao font-bold text-base shadow-lg transition-all hover:-translate-y-0.5 cursor-pointer"
+      class="px-8 py-3 rounded-full bg-theme-accent hover:bg-theme-accent-hover text-stone-900 font-bold font-lao text-base shadow-lg transition-all hover:-translate-y-0.5 cursor-pointer"
       @click="emit('restart')"
     >
       ລອງໃໝ່ອີກຄັ້ງ (Try Again)

@@ -23,6 +23,3 @@ logs
 .env.*
 !.env.example
 
-# Firebase
-.firebase
-

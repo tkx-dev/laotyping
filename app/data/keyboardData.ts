@@ -130,26 +130,34 @@ export interface CharKeyMatch {
   keyDef: KeyDefinition;
 }
 
-// Build fast lookup map from character to key match
-const CHAR_TO_KEY = new Map<string, CharKeyMatch>();
+// Build fast lookup maps from character to key match for each language
+const LAO_CHAR_TO_KEY = new Map<string, CharKeyMatch>();
+const EN_CHAR_TO_KEY = new Map<string, CharKeyMatch>();
 
-// Populate lookup map
+// Populate lookup maps
 for (const row of KEYBOARD_ROWS) {
   for (const key of row) {
     // Space
     if (key.code === 'Space') {
-      CHAR_TO_KEY.set(' ', {
+      const spaceMatch: CharKeyMatch = {
         code: 'Space',
         isShift: false,
         finger: 'right-thumb',
         keyDef: key,
-      });
+      };
+      LAO_CHAR_TO_KEY.set(' ', spaceMatch);
+      EN_CHAR_TO_KEY.set(' ', spaceMatch);
       continue;
     }
 
-    // Lao unshifted
-    if (key.lao && !key.isSpecial) {
-      CHAR_TO_KEY.set(key.lao, {
+    if (key.isSpecial) continue;
+
+    // Shift finger determination (contralateral: left hand key uses right pinky, right hand uses left pinky)
+    const shiftFinger: Finger = key.finger.startsWith('right') ? 'left-pinky' : 'right-pinky';
+
+    // 1. Populate Lao map
+    if (key.lao) {
+      LAO_CHAR_TO_KEY.set(key.lao, {
         code: key.code,
         isShift: false,
         finger: key.finger,
@@ -157,11 +165,8 @@ for (const row of KEYBOARD_ROWS) {
       });
     }
 
-    // Lao shifted
-    if (key.laoShift && !key.isSpecial) {
-      // If the key is on the right hand, use Left Shift (Left Pinky), else Right Shift (Right Pinky)
-      const shiftFinger: Finger = key.finger.startsWith('right') ? 'left-pinky' : 'right-pinky';
-      CHAR_TO_KEY.set(key.laoShift, {
+    if (key.laoShift) {
+      LAO_CHAR_TO_KEY.set(key.laoShift, {
         code: key.code,
         isShift: true,
         finger: key.finger,
@@ -170,39 +175,67 @@ for (const row of KEYBOARD_ROWS) {
       });
     }
 
-    // English unshifted
-    if (key.en && !key.isSpecial && !CHAR_TO_KEY.has(key.en.toLowerCase())) {
-      CHAR_TO_KEY.set(key.en.toLowerCase(), {
-        code: key.code,
-        isShift: false,
-        finger: key.finger,
-        keyDef: key,
-      });
-    }
+    // 2. Populate English map
+    if (key.en) {
+      const isLetter = /^[a-zA-Z]$/.test(key.en);
+      if (isLetter) {
+        // Lowercase letter (unshifted)
+        EN_CHAR_TO_KEY.set(key.en.toLowerCase(), {
+          code: key.code,
+          isShift: false,
+          finger: key.finger,
+          keyDef: key,
+        });
 
-    // English shifted
-    if (key.en && !key.isSpecial && !CHAR_TO_KEY.has(key.en.toUpperCase())) {
-      const shiftFinger: Finger = key.finger.startsWith('right') ? 'left-pinky' : 'right-pinky';
-      CHAR_TO_KEY.set(key.en.toUpperCase(), {
-        code: key.code,
-        isShift: true,
-        finger: key.finger,
-        shiftFinger,
-        keyDef: key,
-      });
+        // Uppercase letter (shifted)
+        EN_CHAR_TO_KEY.set(key.en.toUpperCase(), {
+          code: key.code,
+          isShift: true,
+          finger: key.finger,
+          shiftFinger,
+          keyDef: key,
+        });
+      } else {
+        // Non-letter key (e.g. digits, punctuation)
+        EN_CHAR_TO_KEY.set(key.en, {
+          code: key.code,
+          isShift: false,
+          finger: key.finger,
+          keyDef: key,
+        });
+
+        if (key.enShift) {
+          EN_CHAR_TO_KEY.set(key.enShift, {
+            code: key.code,
+            isShift: true,
+            finger: key.finger,
+            shiftFinger,
+            keyDef: key,
+          });
+        }
+      }
     }
   }
 }
 
 // Special mappings and common aliases
-CHAR_TO_KEY.set('Backspace', {
+const backspaceMatch: CharKeyMatch = {
   code: 'Backspace',
   isShift: false,
   finger: 'right-pinky',
   keyDef: KEYBOARD_ROWS[0]!.find((k) => k.code === 'Backspace')!,
-});
+};
+LAO_CHAR_TO_KEY.set('Backspace', backspaceMatch);
+EN_CHAR_TO_KEY.set('Backspace', backspaceMatch);
 
-export function findKeyForChar(char: string): CharKeyMatch | null {
+export function findKeyForChar(
+  char: string,
+  language: 'lao' | 'english' = 'lao',
+): CharKeyMatch | null {
   if (!char) return null;
-  return CHAR_TO_KEY.get(char) ?? null;
+  if (language === 'english') {
+    return EN_CHAR_TO_KEY.get(char) ?? LAO_CHAR_TO_KEY.get(char) ?? null;
+  }
+  return LAO_CHAR_TO_KEY.get(char) ?? EN_CHAR_TO_KEY.get(char) ?? null;
 }
+
