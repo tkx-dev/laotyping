@@ -158,10 +158,14 @@ defineExpose({
         class="absolute top-3 right-4 sm:top-4 sm:right-6 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-theme-surface/90 border border-theme-accent/40 shadow-lg backdrop-blur-md select-none pointer-events-none"
       >
         <span class="animate-pulse text-xs">🔥</span>
-        <span class="font-mono text-xs font-black tracking-wider text-theme-accent">
+        <span
+          class="font-mono text-xs font-black tracking-wider text-theme-accent"
+        >
           {{ combo }}
         </span>
-        <span class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight">
+        <span
+          class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight"
+        >
           Streak
         </span>
       </div>
@@ -181,8 +185,12 @@ defineExpose({
     <div
       ref="wordsDisplayRef"
       :lang="language === 'english' ? 'en' : 'lo'"
-      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-semibold text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
-      :class="language === 'english' ? 'font-sans tracking-wide' : 'font-phetsarath'"
+      class="flex flex-wrap gap-x-4 gap-y-2 py-1 text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      :class="
+        language === 'english'
+          ? 'font-mono font-medium tracking-normal'
+          : 'font-phetsarath font-semibold'
+      "
     >
       <span
         v-for="(word, wIdx) in words"

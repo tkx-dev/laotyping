@@ -31,6 +31,16 @@ export default defineNuxtConfig({
         provider: 'google',
         weights: [400, 700],
       },
+      {
+        name: 'JetBrains Mono',
+        provider: 'google',
+        weights: [400, 500, 600, 700],
+      },
+      {
+        name: 'Inter',
+        provider: 'google',
+        weights: [400, 500, 600, 700],
+      },
     ],
   },
   css: ['~/assets/css/main.css'],

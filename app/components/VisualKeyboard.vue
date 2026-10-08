@@ -378,7 +378,9 @@ function isKeyPressed(key: KeyDefinition): boolean {
               :class="[
                 key.isSpecial
                   ? 'text-[10px] sm:text-xs font-mono tracking-tight uppercase'
-                  : 'text-sm sm:text-lg md:text-xl font-bold font-phetsarath',
+                  : legendMode === 'en'
+                    ? 'text-sm sm:text-lg md:text-xl font-bold font-mono'
+                    : 'text-sm sm:text-lg md:text-xl font-bold font-phetsarath',
                 isKeyActive(key)
                   ? 'text-white drop-shadow-md scale-105'
                   : 'text-stone-100',
