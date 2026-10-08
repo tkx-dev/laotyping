@@ -88,6 +88,34 @@ function handleCancelRestart() {
   });
 }
 
+function handleUpdateLanguage(newLang: Parameters<typeof setLanguage>[0]) {
+  setLanguage(newLang);
+  nextTick(() => {
+    focusInput();
+  });
+}
+
+function handleUpdateMode(newMode: Parameters<typeof setMode>[0]) {
+  setMode(newMode);
+  nextTick(() => {
+    focusInput();
+  });
+}
+
+function handleUpdateTimeLimit(limit: Parameters<typeof setTimeLimit>[0]) {
+  setTimeLimit(limit);
+  nextTick(() => {
+    focusInput();
+  });
+}
+
+function handleUpdateWordLimit(limit: Parameters<typeof setWordLimit>[0]) {
+  setWordLimit(limit);
+  nextTick(() => {
+    focusInput();
+  });
+}
+
 function handleGlobalKeydown(e: KeyboardEvent) {
   // If confirm popup is open, ignore global key shortcuts
   if (showRestartConfirm.value) return;
@@ -168,10 +196,10 @@ const incorrectWordsCount = computed(
           :mode="mode"
           :time-limit="timeLimit"
           :word-limit="wordLimit"
-          @update:language="setLanguage"
-          @update:mode="setMode"
-          @update:time-limit="setTimeLimit"
-          @update:word-limit="setWordLimit"
+          @update:language="handleUpdateLanguage"
+          @update:mode="handleUpdateMode"
+          @update:time-limit="handleUpdateTimeLimit"
+          @update:word-limit="handleUpdateWordLimit"
         />
 
         <!-- Active Typing Area -->

@@ -205,7 +205,8 @@ function isKeyPressed(key: KeyDefinition): boolean {
       <div class="relative">
         <button
           type="button"
-          class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-theme-surface/80 hover:bg-theme-surface border border-theme-border-subtle text-theme-muted hover:text-theme-primary transition-all text-xs font-mono cursor-pointer shadow-sm"
+          class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-theme-surface/80 hover:bg-theme-surface border border-theme-border-subtle text-theme-muted hover:text-theme-primary transition-all text-xs font-mono cursor-pointer shadow-sm select-none"
+          @mousedown.prevent
           @click="showSettingsMenu = !showSettingsMenu"
         >
           <svg
@@ -243,36 +244,39 @@ function isKeyPressed(key: KeyDefinition): boolean {
             <div class="grid grid-cols-3 gap-1 bg-stone-900/60 p-1 rounded-lg">
               <button
                 type="button"
-                class="py-1 rounded text-center font-phetsarath transition-all cursor-pointer"
+                class="py-1 rounded text-center font-phetsarath transition-all cursor-pointer select-none"
                 :class="
                   legendMode === 'lao'
                     ? 'bg-theme-accent text-stone-900 font-bold'
                     : 'text-theme-muted hover:text-theme-primary'
                 "
+                @mousedown.prevent
                 @click="legendMode = 'lao'"
               >
                 ລາວ
               </button>
               <button
                 type="button"
-                class="py-1 rounded text-center font-phetsarath transition-all cursor-pointer"
+                class="py-1 rounded text-center font-phetsarath transition-all cursor-pointer select-none"
                 :class="
                   legendMode === 'en'
                     ? 'bg-theme-accent text-stone-900 font-bold'
                     : 'text-theme-muted hover:text-theme-primary'
                 "
+                @mousedown.prevent
                 @click="legendMode = 'en'"
               >
                 English
               </button>
               <button
                 type="button"
-                class="py-1 rounded text-center font-phetsarath transition-all cursor-pointer"
+                class="py-1 rounded text-center font-phetsarath transition-all cursor-pointer select-none"
                 :class="
                   legendMode === 'both'
                     ? 'bg-theme-accent text-stone-900 font-bold'
                     : 'text-theme-muted hover:text-theme-primary'
                 "
+                @mousedown.prevent
                 @click="legendMode = 'both'"
               >
                 ລາວ+EN

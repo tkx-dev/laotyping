@@ -174,10 +174,18 @@ defineExpose({
     <!-- Unfocused Prompt Overlay -->
     <div
       v-if="!isFocused"
-      class="absolute inset-0 flex items-center justify-center bg-stone-950/70 backdrop-blur-xs rounded-2xl z-10 cursor-pointer"
+      class="absolute inset-0 flex items-center justify-center bg-stone-950/70 backdrop-blur-xs rounded-2xl z-10 cursor-pointer select-none"
+      @click.stop="focusInput"
     >
-      <span class="text-theme-accent font-semibold font-phetsarath text-lg">
-        ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ
+      <span
+        class="text-theme-accent font-semibold text-lg"
+        :class="language === 'english' ? 'font-mono text-base sm:text-lg' : 'font-phetsarath text-lg'"
+      >
+        {{
+          language === "english"
+            ? "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ (Click to focus)"
+            : "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ"
+        }}
       </span>
     </div>
 
@@ -234,7 +242,7 @@ defineExpose({
             <!-- Zero-width wrapper so the caret never shifts the text -->
             <span
               v-if="isFocused && ci === caretIndex"
-              class="relative inline-block w-0 align-baseline pointer-events-none"
+              class="relative inline-block w-0 h-0 leading-none align-baseline pointer-events-none"
             >
               <span
                 class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"
@@ -268,7 +276,7 @@ defineExpose({
           <!-- Caret at the end of the word -->
           <span
             v-if="isFocused && caretIndex === activeWordView.clusters.length"
-            class="relative inline-block w-0 align-baseline pointer-events-none"
+            class="relative inline-block w-0 h-0 leading-none align-baseline pointer-events-none"
           >
             <span
               class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"

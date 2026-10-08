@@ -7,7 +7,9 @@ const emit = defineEmits<{
 <template>
   <div class="flex justify-center items-center gap-3 mt-6">
     <button
-      class="flex items-center gap-2 px-5 py-2 rounded-full bg-theme-surface/70 hover:bg-theme-surface border border-theme-border-subtle hover:border-theme-border text-theme-muted hover:text-theme-primary text-sm font-medium transition-all hover:-translate-y-0.5 cursor-pointer shadow-md"
+      type="button"
+      class="flex items-center gap-2 px-5 py-2 rounded-full bg-theme-surface/70 hover:bg-theme-surface border border-theme-border-subtle hover:border-theme-border text-theme-muted hover:text-theme-primary text-sm font-medium transition-all hover:-translate-y-0.5 cursor-pointer shadow-md select-none"
+      @mousedown.prevent
       @click="emit('restart')"
     >
       <svg

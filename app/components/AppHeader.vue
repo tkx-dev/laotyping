@@ -59,20 +59,22 @@ const emit = defineEmits<{
         <button
           v-for="t in themeOptions"
           :key="t.id"
-          class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer"
+          type="button"
+          class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer select-none"
           :class="
             currentTheme === t.id
               ? 'bg-white/10 text-theme-primary font-bold shadow-xs'
               : 'text-theme-muted hover:text-theme-primary'
           "
           :title="t.name"
+          @mousedown.prevent
           @click="emit('selectTheme', t.id)"
         >
           <span
-            class="w-2.5 h-2.5 rounded-full"
+            class="w-2.5 h-2.5 rounded-full pointer-events-none"
             :style="{ backgroundColor: t.dotColor }"
           />
-          <span class="hidden md:inline">{{ t.name }}</span>
+          <span class="hidden md:inline pointer-events-none">{{ t.name }}</span>
         </button>
       </div>
 
