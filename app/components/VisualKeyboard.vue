@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import {
   KEYBOARD_ROWS,
   findKeyForChar,
@@ -7,6 +7,7 @@ import {
   type KeyDefinition,
   type Finger,
 } from "../data/keyboardData";
+import type { TypingLanguage } from "../composables/useTypingEngine";
 
 const props = withDefaults(
   defineProps<{
@@ -14,12 +15,14 @@ const props = withDefaults(
     targetChar?: string | null;
     isError?: boolean;
     isSpace?: boolean;
+    language?: TypingLanguage;
   }>(),
   {
     nextChar: null,
     targetChar: null,
     isError: false,
     isSpace: false,
+    language: "lao",
   },
 );
 
@@ -27,19 +30,28 @@ const props = withDefaults(
 const legendMode = ref<"both" | "lao" | "en">("lao");
 const showSettingsMenu = ref(false);
 
+// Automatically set legendMode according to active language
+watch(
+  () => props.language,
+  (lang) => {
+    legendMode.value = lang === "english" ? "en" : "lao";
+  },
+  { immediate: true },
+);
+
 // Physical keys currently pressed by user
 const pressedKeyCodes = ref<Set<string>>(new Set());
 
 // Determine the active target key match
 const currentMatch = computed(() => {
   if (props.isError) {
-    return findKeyForChar("Backspace");
+    return findKeyForChar("Backspace", props.language);
   }
   if (props.isSpace) {
-    return findKeyForChar(" ");
+    return findKeyForChar(" ", props.language);
   }
   if (!props.nextChar) return null;
-  return findKeyForChar(props.nextChar);
+  return findKeyForChar(props.nextChar, props.language);
 });
 
 // Active key code and finger
@@ -59,13 +71,12 @@ const activeShiftCode = computed(() => {
   return shiftFinger.value === "left-pinky" ? "ShiftLeft" : "ShiftRight";
 });
 
-// Guide message
+// Guide message (always in Lao language for system UI)
 const guideMessage = computed(() => {
   if (props.isError) {
     return {
       action: "ກົດ Backspace ເພື່ອລຶບ",
       finger: FINGER_NAMES["right-pinky"].lao,
-      enFinger: FINGER_NAMES["right-pinky"].en,
       isWarning: true,
     };
   }
@@ -73,7 +84,6 @@ const guideMessage = computed(() => {
     return {
       action: "ກົດຍະຫວ່າງ (Space)",
       finger: FINGER_NAMES["right-thumb"].lao,
-      enFinger: FINGER_NAMES["right-thumb"].en,
       isWarning: false,
     };
   }
@@ -82,20 +92,28 @@ const guideMessage = computed(() => {
   }
 
   const fingerInfo = FINGER_NAMES[activeFinger.value];
+  const isEn = props.language === "english";
+
   if (isShiftRequired.value) {
     const sInfo = shiftFinger.value ? FINGER_NAMES[shiftFinger.value] : null;
+    const keyLabel = isEn
+      ? currentMatch.value?.keyDef.enShift || currentMatch.value?.keyDef.en
+      : currentMatch.value?.keyDef.laoShift || currentMatch.value?.keyDef.lao;
+
     return {
-      action: `ກົດ Shift (${sInfo?.lao}) + ປຸ່ມ ${currentMatch.value?.keyDef.laoShift || currentMatch.value?.keyDef.lao}`,
+      action: `ກົດ Shift (${sInfo?.lao}) + ປຸ່ມ ${keyLabel}`,
       finger: `${fingerInfo.lao} (ພ້ອມ Shift)`,
-      enFinger: `${fingerInfo.en} with Shift`,
       isWarning: false,
     };
   }
 
+  const keyLabel = isEn
+    ? currentMatch.value?.keyDef.en
+    : currentMatch.value?.keyDef.lao || currentMatch.value?.keyDef.en;
+
   return {
-    action: `ກົດປຸ່ມ: ${currentMatch.value?.keyDef.lao || currentMatch.value?.keyDef.en}`,
+    action: `ກົດປຸ່ມ: ${keyLabel}`,
     finger: fingerInfo.lao,
-    enFinger: fingerInfo.en,
     isWarning: false,
   };
 });
@@ -168,14 +186,11 @@ function isKeyPressed(key: KeyDefinition): boolean {
               class="w-2 h-2 rounded-full animate-ping"
               :class="guideMessage.isWarning ? 'bg-rose-400' : 'bg-sky-400'"
             />
-            <span class="font-medium font-phetsarath"
-              >{{ guideMessage.action }}:</span
-            >
+            <span class="font-medium font-phetsarath">
+              {{ guideMessage.action }}:
+            </span>
             <span class="font-bold font-phetsarath text-theme-accent">
               {{ guideMessage.finger }}
-            </span>
-            <span class="text-xs text-theme-muted hidden md:inline">
-              ({{ guideMessage.enFinger }})
             </span>
           </div>
         </template>

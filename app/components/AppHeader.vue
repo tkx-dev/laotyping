@@ -40,7 +40,7 @@ const emit = defineEmits<{
           LaoType
         </h1>
         <p class="text-xs font-lao text-theme-muted font-medium">
-          ຝຶກພິມດີດພາສາລາວ
+          ເວັບໄຊຝຶກພິມດີດພາສາລາວ
         </p>
       </div>
     </div>

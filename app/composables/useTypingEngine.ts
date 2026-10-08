@@ -1,5 +1,6 @@
 import { ref, computed } from "vue";
 import { getRandomLaoWords } from "../data/words";
+import { getRandomEnglishWords } from "../data/englishWords";
 import {
   normalizeLao,
   toCps,
@@ -8,6 +9,7 @@ import {
 } from "../utils/lao";
 import { useTypingSound } from "./useTypingSound";
 
+export type TypingLanguage = "lao" | "english";
 export type TestMode = "time" | "words";
 export type TimeOption = 15 | 30 | 60;
 export type WordOption = 10 | 25 | 50;
@@ -30,9 +32,20 @@ const MAX_EXTRA_CHARS = 8; // how many chars past the end of a word the user may
 const TICK_MS = 200;
 
 export function useTypingEngine() {
+  const language = useState<TypingLanguage>("typing_engine_language", () => "lao");
   const mode = ref<TestMode>("time");
   const timeLimit = ref<TimeOption>(30);
   const wordLimit = ref<WordOption>(25);
+
+  // Restore language preference from localStorage on client
+  if (import.meta.client) {
+    try {
+      const savedLang = localStorage.getItem("laotype_language") as TypingLanguage | null;
+      if (savedLang === "lao" || savedLang === "english") {
+        language.value = savedLang;
+      }
+    } catch {}
+  }
 
   const status = ref<EngineStatus>("idle");
   const words = useState<string[]>("typing_engine_words", () => []);
@@ -63,6 +76,9 @@ export function useTypingEngine() {
   const currentTarget = () => words.value[currentWordIndex.value] ?? "";
 
   function generateWords(n: number) {
+    if (language.value === "english") {
+      return getRandomEnglishWords(n).filter((w) => w.length > 0);
+    }
     // Normalize targets once, so comparison is always normalized vs normalized
     return getRandomLaoWords(n)
       .map(normalizeLao)
@@ -113,6 +129,7 @@ export function useTypingEngine() {
     if (status.value !== "running" || startTime.value === null) return;
     now.value = Date.now();
     if (mode.value === "time") {
+
       // Derive from the real clock instead of decrementing (setInterval drifts / gets throttled)
       const remaining = timeLimit.value * 1000 - (now.value - startTime.value);
       timeLeft.value = Math.max(0, Math.ceil(remaining / 1000));
@@ -286,7 +303,10 @@ export function useTypingEngine() {
     const prev = currentInput.value;
 
     // Normalize + cap length (no more auto-commit on overflow: only Space ends a word)
-    let cps = toCps(normalizeLao(head));
+    let cps =
+      language.value === "english"
+        ? toCps(head)
+        : toCps(normalizeLao(head));
     const maxLen = toCps(target).length + MAX_EXTRA_CHARS;
     if (cps.length > maxLen) cps = cps.slice(0, maxLen);
     const next = cps.join("");
@@ -373,6 +393,17 @@ export function useTypingEngine() {
     }
   }
 
+  function setLanguage(newLanguage: TypingLanguage) {
+    if (language.value === newLanguage) return;
+    language.value = newLanguage;
+    if (import.meta.client) {
+      try {
+        localStorage.setItem("laotype_language", newLanguage);
+      } catch {}
+    }
+    initTest();
+  }
+
   function setMode(newMode: TestMode) {
     mode.value = newMode;
     initTest();
@@ -391,6 +422,7 @@ export function useTypingEngine() {
   }
 
   return {
+    language,
     mode,
     timeLimit,
     wordLimit,
@@ -415,6 +447,7 @@ export function useTypingEngine() {
     handleInput,
     handleCompositionEnd, // NEW: bind to @compositionend
     handleKeydown,
+    setLanguage,
     setMode,
     setTimeLimit,
     setWordLimit,

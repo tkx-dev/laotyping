@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
-import type { WordHistory } from "../composables/useTypingEngine";
+import type {
+  TypingLanguage,
+  WordHistory,
+} from "../composables/useTypingEngine";
 import { buildClusterView, type CharState } from "../utils/lao";
 
 const props = withDefaults(
@@ -10,6 +13,7 @@ const props = withDefaults(
     currentInput: string;
     wordHistory: WordHistory[];
     combo?: number;
+    language?: TypingLanguage;
     activeWordView: {
       clusters: {
         text: string;
@@ -22,6 +26,7 @@ const props = withDefaults(
   }>(),
   {
     combo: 0,
+    language: "lao",
   },
 );
 
@@ -126,7 +131,7 @@ defineExpose({
     <input
       ref="inputRef"
       type="text"
-      lang="lo"
+      :lang="language === 'english' ? 'en' : 'lo'"
       class="absolute opacity-0 pointer-events-none left-0 top-0"
       autocomplete="off"
       autocorrect="off"
@@ -175,8 +180,9 @@ defineExpose({
     <!-- Words Stream -->
     <div
       ref="wordsDisplayRef"
-      lang="lo"
-      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-phetsarath font-semibold text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      :lang="language === 'english' ? 'en' : 'lo'"
+      class="flex flex-wrap gap-x-4 gap-y-2 py-1 font-semibold text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      :class="language === 'english' ? 'font-sans tracking-wide' : 'font-phetsarath'"
     >
       <span
         v-for="(word, wIdx) in words"

@@ -3,7 +3,7 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from "vue";
 import { useTypingEngine } from "../composables/useTypingEngine";
 import { useTheme } from "../composables/useTheme";
 
-// SEO and Meta
+// SEO and Meta (System UI is in Lao)
 useHead({
   title: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)",
   meta: [
@@ -18,6 +18,7 @@ useHead({
 });
 
 const {
+  language,
   mode,
   timeLimit,
   wordLimit,
@@ -40,6 +41,7 @@ const {
   handleInput,
   handleCompositionEnd,
   handleKeydown,
+  setLanguage,
   setMode,
   setTimeLimit,
   setWordLimit,
@@ -160,11 +162,13 @@ const incorrectWordsCount = computed(
     <!-- Main Content -->
     <main class="my-auto">
       <template v-if="status !== 'finished'">
-        <!-- Controls Bar (Modes & Options) -->
+        <!-- Controls Bar (Typing Language, Modes & Options) -->
         <TypingControls
+          :language="language"
           :mode="mode"
           :time-limit="timeLimit"
           :word-limit="wordLimit"
+          @update:language="setLanguage"
           @update:mode="setMode"
           @update:time-limit="setTimeLimit"
           @update:word-limit="setWordLimit"
@@ -178,6 +182,7 @@ const incorrectWordsCount = computed(
           :current-input="currentInput"
           :word-history="wordHistory"
           :combo="combo"
+          :language="language"
           :active-word-view="activeWordView"
           @input="handleInput"
           @compositionend="handleCompositionEnd"
@@ -191,6 +196,7 @@ const incorrectWordsCount = computed(
             :target-char="nextExpectedCharInfo?.targetChar"
             :is-error="nextExpectedCharInfo?.isError"
             :is-space="nextExpectedCharInfo?.isSpace"
+            :language="language"
           />
         </ClientOnly>
 
@@ -216,7 +222,7 @@ const incorrectWordsCount = computed(
     <!-- Footer -->
     <AppFooter />
 
-    <!-- Restart Confirmation Modal -->
+    <!-- Restart Confirmation Modal (Lao UI) -->
     <CommonConfirmDialog
       :is-open="showRestartConfirm"
       title="ຢືນຢັນການເລີ່ມໃໝ່"
