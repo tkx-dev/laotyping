@@ -9,9 +9,12 @@ import {
   buildClusterView,
 } from "../utils/lao";
 import { useTypingSound } from "./useTypingSound";
+import type { Lesson } from "../types/lesson";
+import { findLessonById, getNextLesson } from "../data/lessons";
+import { useLessonProgress } from "./useLessonProgress";
 
 export type TypingLanguage = "lao" | "english";
-export type TestMode = "time" | "words";
+export type TestMode = "time" | "words" | "lesson";
 export type TimeOption = 15 | 30 | 60;
 export type WordOption = 10 | 25 | 50;
 export type EngineStatus = "idle" | "running" | "finished";
@@ -59,6 +62,22 @@ export function useTypingEngine() {
   const mode = ref<TestMode>("time");
   const timeLimit = ref<TimeOption>(30);
   const wordLimit = ref<WordOption>(25);
+
+  const currentLesson = ref<Lesson | null>(null);
+  const lessonResult = ref<{
+    stars: number;
+    earnedStars: number;
+    isCompleted: boolean;
+  } | null>(null);
+
+  const {
+    progress: lessonProgress,
+    getLessonProgress,
+    isLessonCompleted,
+    getLessonStars,
+    isLessonUnlocked,
+    recordResult,
+  } = useLessonProgress();
 
   // Restore language and punctuation preferences safely in onMounted to prevent SSR hydration mismatches
   onMounted(() => {
@@ -162,12 +181,20 @@ export function useTypingEngine() {
     startTime.value = null;
     endTime.value = null;
 
-    if (mode.value === "time") {
+    if (mode.value === "lesson" && currentLesson.value) {
+      timeLeft.value = 0;
+      words.value = [...currentLesson.value.words];
+      lessonResult.value = null;
+    } else if (mode.value === "time") {
       timeLeft.value = timeLimit.value;
       words.value = generateWords(120);
+      currentLesson.value = null;
+      lessonResult.value = null;
     } else {
       words.value = generateWords(wordLimit.value);
       timeLeft.value = 0;
+      currentLesson.value = null;
+      lessonResult.value = null;
     }
   }
 
@@ -217,6 +244,14 @@ export function useTypingEngine() {
         typed: currentInput.value,
         isCorrect: currentInput.value === target,
       });
+    }
+
+    if (mode.value === "lesson" && currentLesson.value) {
+      lessonResult.value = recordResult(
+        currentLesson.value,
+        wpm.value,
+        accuracy.value,
+      );
     }
   }
 
@@ -403,7 +438,7 @@ export function useTypingEngine() {
     ensureWords();
 
     if (
-      mode.value === "words" &&
+      (mode.value === "words" || mode.value === "lesson") &&
       currentWordIndex.value >= words.value.length
     ) {
       finishTest();
@@ -467,20 +502,53 @@ export function useTypingEngine() {
     initTest();
   }
 
+  function loadLesson(lessonId: string): boolean {
+    const lesson = findLessonById(lessonId);
+    if (!lesson) return false;
+
+    currentLesson.value = lesson;
+    mode.value = "lesson";
+    if (lesson.language !== language.value) {
+      language.value = lesson.language;
+      langCookie.value = lesson.language;
+      if (import.meta.client) {
+        try {
+          localStorage.setItem("laotype_language", lesson.language);
+        } catch {}
+      }
+    }
+    initTest();
+    return true;
+  }
+
+  function nextLesson(): boolean {
+    if (!currentLesson.value) return false;
+    const next = getNextLesson(currentLesson.value.id);
+    if (next) {
+      return loadLesson(next.id);
+    }
+    return false;
+  }
+
   function setMode(newMode: TestMode) {
     mode.value = newMode;
+    if (newMode !== "lesson") {
+      currentLesson.value = null;
+    }
     initTest();
   }
 
   function setTimeLimit(seconds: TimeOption) {
     timeLimit.value = seconds;
     mode.value = "time";
+    currentLesson.value = null;
     initTest();
   }
 
   function setWordLimit(count: WordOption) {
     wordLimit.value = count;
     mode.value = "words";
+    currentLesson.value = null;
     initTest();
   }
 
@@ -490,6 +558,9 @@ export function useTypingEngine() {
     mode,
     timeLimit,
     wordLimit,
+    currentLesson,
+    lessonResult,
+    lessonProgress,
     status,
     words,
     currentWordIndex,
@@ -511,6 +582,12 @@ export function useTypingEngine() {
     handleInput,
     handleCompositionEnd, // NEW: bind to @compositionend
     handleKeydown,
+    loadLesson,
+    nextLesson,
+    getLessonProgress,
+    isLessonCompleted,
+    getLessonStars,
+    isLessonUnlocked,
     setPunctuation,
     setLanguage,
     setMode,

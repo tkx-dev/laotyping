@@ -191,7 +191,7 @@ const incorrectWordsCount = computed(
       :mode="mode"
       :time-left="timeLeft"
       :current-word-index="currentWordIndex"
-      :word-limit="wordLimit"
+      :word-limit="mode === 'lesson' ? words.length : wordLimit"
       @restart="requestRestart"
       @select-theme="setTheme"
     />
