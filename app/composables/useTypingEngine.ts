@@ -1,7 +1,7 @@
 import { ref, computed, onMounted } from "vue";
 import { getRandomLaoWords } from "../data/words";
 import { getRandomEnglishWords } from "../data/englishWords";
-import { applyPunctuation, getSpecialCharactersDrill } from "../utils/punctuation";
+import { applyPunctuation } from "../utils/punctuation";
 import {
   normalizeLao,
   toCps,
@@ -11,7 +11,7 @@ import {
 import { useTypingSound } from "./useTypingSound";
 
 export type TypingLanguage = "lao" | "english";
-export type TestMode = "time" | "words" | "symbols";
+export type TestMode = "time" | "words";
 export type TimeOption = 15 | 30 | 60;
 export type WordOption = 10 | 25 | 50;
 export type EngineStatus = "idle" | "running" | "finished";
@@ -117,21 +117,16 @@ export function useTypingEngine() {
   const currentTarget = () => words.value[currentWordIndex.value] ?? "";
 
   function generateWords(n: number) {
-    let result: string[];
-    if (mode.value === "symbols") {
-      result = getSpecialCharactersDrill(n, language.value);
-    } else {
-      const baseWords =
-        language.value === "english"
-          ? getRandomEnglishWords(n).filter((w) => w.length > 0)
-          : getRandomLaoWords(n)
-              .map(normalizeLao)
-              .filter((w) => w.length > 0);
+    const baseWords =
+      language.value === "english"
+        ? getRandomEnglishWords(n).filter((w) => w.length > 0)
+        : getRandomLaoWords(n)
+            .map(normalizeLao)
+            .filter((w) => w.length > 0);
 
-      result = hasPunctuation.value
-        ? applyPunctuation(baseWords, language.value)
-        : baseWords;
-    }
+    const result = hasPunctuation.value
+      ? applyPunctuation(baseWords, language.value)
+      : baseWords;
 
     // Safety guarantee: in a typing test, Space delimits words.
     // No token in words must EVER contain internal whitespace.
@@ -408,7 +403,7 @@ export function useTypingEngine() {
     ensureWords();
 
     if (
-      (mode.value === "words" || mode.value === "symbols") &&
+      mode.value === "words" &&
       currentWordIndex.value >= words.value.length
     ) {
       finishTest();
@@ -485,9 +480,7 @@ export function useTypingEngine() {
 
   function setWordLimit(count: WordOption) {
     wordLimit.value = count;
-    if (mode.value !== "symbols") {
-      mode.value = "words";
-    }
+    mode.value = "words";
     initTest();
   }
 

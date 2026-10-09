@@ -116,25 +116,11 @@ const emit = defineEmits<{
       >
         <span class="pointer-events-none">ຄຳສັບ (Words)</span>
       </button>
-      <button
-        type="button"
-        class="px-2.5 sm:px-3 py-1 text-xs sm:text-sm font-semibold rounded-full transition-all cursor-pointer select-none"
-        :class="
-          mode === 'symbols'
-            ? 'bg-theme-accent text-stone-900 font-bold shadow-md'
-            : 'text-theme-muted hover:text-theme-primary'
-        "
-        title="ໂໝດຝຶກເຄື່ອງໝາຍພິເສດ (, . + = - ? ! ₭ ຯລຯ)"
-        @mousedown.prevent
-        @click="emit('update:mode', 'symbols')"
-      >
-        <span class="pointer-events-none">ຝຶກເຄື່ອງໝາຍ</span>
-      </button>
     </div>
 
     <div class="w-px h-4 bg-white/10" />
 
-    <!-- Sub options: Time limits or Word/Symbol count -->
+    <!-- Sub options: Time limits or Word count -->
     <div v-if="mode === 'time'" class="flex items-center gap-1">
       <button
         v-for="t in [15, 30, 60] as TimeOption[]"
