@@ -1,6 +1,7 @@
 import { ref, computed, onMounted } from "vue";
 import { getRandomLaoWords } from "../data/words";
 import { getRandomEnglishWords } from "../data/englishWords";
+import { applyPunctuation, getSpecialCharactersDrill } from "../utils/punctuation";
 import {
   normalizeLao,
   toCps,
@@ -10,7 +11,7 @@ import {
 import { useTypingSound } from "./useTypingSound";
 
 export type TypingLanguage = "lao" | "english";
-export type TestMode = "time" | "words";
+export type TestMode = "time" | "words" | "symbols";
 export type TimeOption = 15 | 30 | 60;
 export type WordOption = 10 | 25 | 50;
 export type EngineStatus = "idle" | "running" | "finished";
@@ -44,11 +45,22 @@ export function useTypingEngine() {
     }
     return "lao";
   });
+
+  const puncCookie = useCookie<boolean>("laotype_punctuation", {
+    default: () => false,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  const hasPunctuation = useState<boolean>("typing_engine_punctuation", () => {
+    return Boolean(puncCookie.value);
+  });
+
   const mode = ref<TestMode>("time");
   const timeLimit = ref<TimeOption>(30);
   const wordLimit = ref<WordOption>(25);
 
-  // Restore language preference safely in onMounted to prevent SSR hydration mismatches
+  // Restore language and punctuation preferences safely in onMounted to prevent SSR hydration mismatches
   onMounted(() => {
     try {
       const savedLang = localStorage.getItem("laotype_language") as TypingLanguage | null;
@@ -64,6 +76,14 @@ export function useTypingEngine() {
         langCookie.value !== savedLang
       ) {
         langCookie.value = savedLang;
+      }
+
+      const savedPunc = localStorage.getItem("laotype_punctuation");
+      if (savedPunc !== null) {
+        const boolVal = savedPunc === "true";
+        if (hasPunctuation.value !== boolVal) {
+          hasPunctuation.value = boolVal;
+        }
       }
     } catch {}
   });
@@ -97,12 +117,26 @@ export function useTypingEngine() {
   const currentTarget = () => words.value[currentWordIndex.value] ?? "";
 
   function generateWords(n: number) {
-    if (language.value === "english") {
-      return getRandomEnglishWords(n).filter((w) => w.length > 0);
+    let result: string[];
+    if (mode.value === "symbols") {
+      result = getSpecialCharactersDrill(n, language.value);
+    } else {
+      const baseWords =
+        language.value === "english"
+          ? getRandomEnglishWords(n).filter((w) => w.length > 0)
+          : getRandomLaoWords(n)
+              .map(normalizeLao)
+              .filter((w) => w.length > 0);
+
+      result = hasPunctuation.value
+        ? applyPunctuation(baseWords, language.value)
+        : baseWords;
     }
-    // Normalize targets once, so comparison is always normalized vs normalized
-    return getRandomLaoWords(n)
-      .map(normalizeLao)
+
+    // Safety guarantee: in a typing test, Space delimits words.
+    // No token in words must EVER contain internal whitespace.
+    return result
+      .flatMap((w) => w.trim().split(/\s+/))
       .filter((w) => w.length > 0);
   }
 
@@ -326,7 +360,7 @@ export function useTypingEngine() {
     // Normalize + cap length (no more auto-commit on overflow: only Space ends a word)
     let cps =
       language.value === "english"
-        ? toCps(head)
+        ? toCps(head.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'"))
         : toCps(normalizeLao(head));
     const maxLen = toCps(target).length + MAX_EXTRA_CHARS;
     if (cps.length > maxLen) cps = cps.slice(0, maxLen);
@@ -374,7 +408,7 @@ export function useTypingEngine() {
     ensureWords();
 
     if (
-      mode.value === "words" &&
+      (mode.value === "words" || mode.value === "symbols") &&
       currentWordIndex.value >= words.value.length
     ) {
       finishTest();
@@ -414,6 +448,18 @@ export function useTypingEngine() {
     }
   }
 
+  function setPunctuation(val: boolean) {
+    if (hasPunctuation.value === val) return;
+    hasPunctuation.value = val;
+    puncCookie.value = val;
+    if (import.meta.client) {
+      try {
+        localStorage.setItem("laotype_punctuation", String(val));
+      } catch {}
+    }
+    initTest();
+  }
+
   function setLanguage(newLanguage: TypingLanguage) {
     if (language.value === newLanguage) return;
     language.value = newLanguage;
@@ -439,12 +485,15 @@ export function useTypingEngine() {
 
   function setWordLimit(count: WordOption) {
     wordLimit.value = count;
-    mode.value = "words";
+    if (mode.value !== "symbols") {
+      mode.value = "words";
+    }
     initTest();
   }
 
   return {
     language,
+    hasPunctuation,
     mode,
     timeLimit,
     wordLimit,
@@ -469,6 +518,7 @@ export function useTypingEngine() {
     handleInput,
     handleCompositionEnd, // NEW: bind to @compositionend
     handleKeydown,
+    setPunctuation,
     setLanguage,
     setMode,
     setTimeLimit,

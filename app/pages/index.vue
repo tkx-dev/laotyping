@@ -19,6 +19,7 @@ useHead({
 
 const {
   language,
+  hasPunctuation,
   mode,
   timeLimit,
   wordLimit,
@@ -41,6 +42,7 @@ const {
   handleInput,
   handleCompositionEnd,
   handleKeydown,
+  setPunctuation,
   setLanguage,
   setMode,
   setTimeLimit,
@@ -90,6 +92,13 @@ function handleCancelRestart() {
 
 function handleUpdateLanguage(newLang: Parameters<typeof setLanguage>[0]) {
   setLanguage(newLang);
+  nextTick(() => {
+    focusInput();
+  });
+}
+
+function handleUpdatePunctuation(val: boolean) {
+  setPunctuation(val);
   nextTick(() => {
     focusInput();
   });
@@ -193,10 +202,12 @@ const incorrectWordsCount = computed(
         <!-- Controls Bar (Typing Language, Modes & Options) -->
         <TypingControls
           :language="language"
+          :has-punctuation="hasPunctuation"
           :mode="mode"
           :time-limit="timeLimit"
           :word-limit="wordLimit"
           @update:language="handleUpdateLanguage"
+          @update:has-punctuation="handleUpdatePunctuation"
           @update:mode="handleUpdateMode"
           @update:time-limit="handleUpdateTimeLimit"
           @update:word-limit="handleUpdateWordLimit"

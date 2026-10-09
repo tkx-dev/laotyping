@@ -124,7 +124,7 @@ const emit = defineEmits<{
         >
           <span
             class="text-[10px] text-theme-muted uppercase font-bold tracking-wider"
-            >WORD</span
+            >{{ mode === 'symbols' ? 'SYM' : 'WORD' }}</span
           >
           <span class="text-base font-bold text-theme-accent">
             {{ currentWordIndex }}/{{ wordLimit }}
