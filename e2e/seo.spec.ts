@@ -38,6 +38,10 @@ test.describe('SEO and Google Search Console Configuration', () => {
     const jsonContent = await jsonLd.textContent();
     expect(jsonContent).toContain('WebApplication');
     expect(jsonContent).toContain('FAQPage');
+
+    // Google Analytics (gtag.js)
+    const gtagScript = page.locator('script[src*="googletagmanager.com/gtag/js?id=G-853N51294D"]');
+    await expect(gtagScript).toBeAttached();
   });
 
   test('should serve dynamic XML sitemap with correct content-type', async ({ request }) => {
