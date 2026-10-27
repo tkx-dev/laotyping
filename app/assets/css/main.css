@@ -63,33 +63,35 @@
   }
 }
 
-/* Phetsarath OT Font Declarations (Standard local font + local bundle fallback) */
+/* Nuanta Font Declarations (for Typing Area) */
 @font-face {
-  font-family: 'Phetsarath OT';
+  font-family: 'Nuanta';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: local('Phetsarath OT'),
-       local('Phetsarath'),
-       local('PhetsarathOT'),
-       url('/fonts/Phetsarath-Regular.ttf') format('truetype');
+  src: url('/fonts/Nuanta/Nuanta-Regular.ttf') format('truetype');
 }
 
 @font-face {
-  font-family: 'Phetsarath OT';
+  font-family: 'Nuanta';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Nuanta/Nuanta-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Nuanta';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: local('Phetsarath OT Bold'),
-       local('Phetsarath Bold'),
-       local('PhetsarathOT-Bold'),
-       url('/fonts/Phetsarath-Bold.ttf') format('truetype');
+  src: url('/fonts/Nuanta/Nuanta-Bold.ttf') format('truetype');
 }
 
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-lao: 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-phetsarath: 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-nuanta: 'Nuanta', 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-theme-bg: var(--theme-bg);

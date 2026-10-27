@@ -186,16 +186,16 @@ function isKeyPressed(key: KeyDefinition): boolean {
               class="w-2 h-2 rounded-full animate-ping"
               :class="guideMessage.isWarning ? 'bg-rose-400' : 'bg-sky-400'"
             />
-            <span class="font-medium font-lao">
+            <span class="font-medium font-nuanta">
               {{ guideMessage.action }}:
             </span>
-            <span class="font-bold font-lao text-theme-accent">
+            <span class="font-bold font-nuanta text-theme-accent">
               {{ guideMessage.finger }}
             </span>
           </div>
         </template>
         <template v-else>
-          <div class="text-xs text-theme-muted font-lao">
+          <div class="text-xs text-theme-muted font-nuanta">
             ເລີ່ມພິມເພື່ອເບິ່ງຄຳແນະນຳນິ້ວມື
           </div>
         </template>
@@ -238,13 +238,13 @@ function isKeyPressed(key: KeyDefinition): boolean {
         >
           <!-- Legend Mode -->
           <div class="flex flex-col gap-1.5">
-            <span class="font-lao text-theme-muted"
+            <span class="font-nuanta text-theme-muted"
               >ຮູບແບບຕົວອັກສອນ (Legend):</span
             >
             <div class="grid grid-cols-3 gap-1 bg-stone-900/60 p-1 rounded-lg">
               <button
                 type="button"
-                class="py-1 rounded text-center font-lao transition-all cursor-pointer select-none"
+                class="py-1 rounded text-center font-nuanta transition-all cursor-pointer select-none"
                 :class="
                   legendMode === 'lao'
                     ? 'bg-theme-accent text-stone-900 font-bold'
@@ -257,7 +257,7 @@ function isKeyPressed(key: KeyDefinition): boolean {
               </button>
               <button
                 type="button"
-                class="py-1 rounded text-center font-lao transition-all cursor-pointer select-none"
+                class="py-1 rounded text-center font-nuanta transition-all cursor-pointer select-none"
                 :class="
                   legendMode === 'en'
                     ? 'bg-theme-accent text-stone-900 font-bold'
@@ -270,7 +270,7 @@ function isKeyPressed(key: KeyDefinition): boolean {
               </button>
               <button
                 type="button"
-                class="py-1 rounded text-center font-lao transition-all cursor-pointer select-none"
+                class="py-1 rounded text-center font-nuanta transition-all cursor-pointer select-none"
                 :class="
                   legendMode === 'both'
                     ? 'bg-theme-accent text-stone-900 font-bold'
@@ -332,7 +332,7 @@ function isKeyPressed(key: KeyDefinition): boolean {
                   key.laoShift &&
                   key.laoShift !== key.lao
                 "
-                class="font-lao font-bold text-xs sm:text-sm tracking-normal transition-colors"
+                class="font-nuanta font-bold text-xs sm:text-sm tracking-normal transition-colors"
                 :class="
                   isKeyActive(key)
                     ? 'text-white'
@@ -384,7 +384,7 @@ function isKeyPressed(key: KeyDefinition): boolean {
                   ? 'text-[10px] sm:text-xs font-mono tracking-tight uppercase'
                   : legendMode === 'en'
                     ? 'text-sm sm:text-lg md:text-xl font-bold font-mono'
-                    : 'text-sm sm:text-lg md:text-xl font-bold font-lao',
+                    : 'text-sm sm:text-lg md:text-xl font-bold font-nuanta',
                 isKeyActive(key)
                   ? 'text-white drop-shadow-md scale-105'
                   : 'text-stone-100',

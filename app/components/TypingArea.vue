@@ -189,7 +189,7 @@ defineExpose({
           </svg>
           <span
             class="font-semibold text-sm sm:text-base tracking-wide"
-            :class="language === 'english' ? 'font-mono' : 'font-lao'"
+            :class="language === 'english' ? 'font-mono' : 'font-nuanta'"
           >
             {{
               language === "english"
@@ -209,16 +209,16 @@ defineExpose({
       :class="
         language === 'english'
           ? 'font-mono font-medium tracking-normal'
-          : 'font-lao font-medium tracking-wide'
+          : 'font-nuanta font-medium tracking-wide'
       "
     >
       <span
         v-for="(word, wIdx) in words"
         :key="wIdx"
-        class="relative inline-block transition-all duration-150 rounded-md px-1"
+        class="relative inline-block transition-colors duration-150"
         :class="{
-          'active-word bg-theme-surface/50 ring-1 ring-theme-accent/25': wIdx === currentWordIndex,
-          'text-theme-subtle opacity-70': wIdx > currentWordIndex,
+          'active-word text-theme-primary': wIdx === currentWordIndex,
+          'text-theme-subtle opacity-60': wIdx > currentWordIndex,
         }"
       >
         <!-- Previously completed word -->
