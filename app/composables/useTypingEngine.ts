@@ -1,6 +1,7 @@
 import { ref, computed, onMounted } from "vue";
 import { getRandomLaoWords } from "../data/words";
 import { getRandomEnglishWords } from "../data/englishWords";
+import { applyPunctuation } from "../utils/punctuation";
 import {
   normalizeLao,
   toCps,
@@ -8,9 +9,12 @@ import {
   buildClusterView,
 } from "../utils/lao";
 import { useTypingSound } from "./useTypingSound";
+import type { Lesson } from "../types/lesson";
+import { findLessonById, getNextLesson } from "../data/lessons";
+import { useLessonProgress } from "./useLessonProgress";
 
 export type TypingLanguage = "lao" | "english";
-export type TestMode = "time" | "words";
+export type TestMode = "time" | "words" | "lesson";
 export type TimeOption = 15 | 30 | 60;
 export type WordOption = 10 | 25 | 50;
 export type EngineStatus = "idle" | "running" | "finished";
@@ -44,11 +48,38 @@ export function useTypingEngine() {
     }
     return "lao";
   });
+
+  const puncCookie = useCookie<boolean>("laotype_punctuation", {
+    default: () => false,
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+
+  const hasPunctuation = useState<boolean>("typing_engine_punctuation", () => {
+    return Boolean(puncCookie.value);
+  });
+
   const mode = ref<TestMode>("time");
   const timeLimit = ref<TimeOption>(30);
   const wordLimit = ref<WordOption>(25);
 
-  // Restore language preference safely in onMounted to prevent SSR hydration mismatches
+  const currentLesson = ref<Lesson | null>(null);
+  const lessonResult = ref<{
+    stars: number;
+    earnedStars: number;
+    isCompleted: boolean;
+  } | null>(null);
+
+  const {
+    progress: lessonProgress,
+    getLessonProgress,
+    isLessonCompleted,
+    getLessonStars,
+    isLessonUnlocked,
+    recordResult,
+  } = useLessonProgress();
+
+  // Restore language and punctuation preferences safely in onMounted to prevent SSR hydration mismatches
   onMounted(() => {
     try {
       const savedLang = localStorage.getItem("laotype_language") as TypingLanguage | null;
@@ -64,6 +95,14 @@ export function useTypingEngine() {
         langCookie.value !== savedLang
       ) {
         langCookie.value = savedLang;
+      }
+
+      const savedPunc = localStorage.getItem("laotype_punctuation");
+      if (savedPunc !== null) {
+        const boolVal = savedPunc === "true";
+        if (hasPunctuation.value !== boolVal) {
+          hasPunctuation.value = boolVal;
+        }
       }
     } catch {}
   });
@@ -97,12 +136,21 @@ export function useTypingEngine() {
   const currentTarget = () => words.value[currentWordIndex.value] ?? "";
 
   function generateWords(n: number) {
-    if (language.value === "english") {
-      return getRandomEnglishWords(n).filter((w) => w.length > 0);
-    }
-    // Normalize targets once, so comparison is always normalized vs normalized
-    return getRandomLaoWords(n)
-      .map(normalizeLao)
+    const baseWords =
+      language.value === "english"
+        ? getRandomEnglishWords(n).filter((w) => w.length > 0)
+        : getRandomLaoWords(n)
+            .map(normalizeLao)
+            .filter((w) => w.length > 0);
+
+    const result = hasPunctuation.value
+      ? applyPunctuation(baseWords, language.value)
+      : baseWords;
+
+    // Safety guarantee: in a typing test, Space delimits words.
+    // No token in words must EVER contain internal whitespace.
+    return result
+      .flatMap((w) => w.trim().split(/\s+/))
       .filter((w) => w.length > 0);
   }
 
@@ -133,12 +181,20 @@ export function useTypingEngine() {
     startTime.value = null;
     endTime.value = null;
 
-    if (mode.value === "time") {
+    if (mode.value === "lesson" && currentLesson.value) {
+      timeLeft.value = 0;
+      words.value = [...currentLesson.value.words];
+      lessonResult.value = null;
+    } else if (mode.value === "time") {
       timeLeft.value = timeLimit.value;
       words.value = generateWords(120);
+      currentLesson.value = null;
+      lessonResult.value = null;
     } else {
       words.value = generateWords(wordLimit.value);
       timeLeft.value = 0;
+      currentLesson.value = null;
+      lessonResult.value = null;
     }
   }
 
@@ -188,6 +244,14 @@ export function useTypingEngine() {
         typed: currentInput.value,
         isCorrect: currentInput.value === target,
       });
+    }
+
+    if (mode.value === "lesson" && currentLesson.value) {
+      lessonResult.value = recordResult(
+        currentLesson.value,
+        wpm.value,
+        accuracy.value,
+      );
     }
   }
 
@@ -326,7 +390,7 @@ export function useTypingEngine() {
     // Normalize + cap length (no more auto-commit on overflow: only Space ends a word)
     let cps =
       language.value === "english"
-        ? toCps(head)
+        ? toCps(head.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'"))
         : toCps(normalizeLao(head));
     const maxLen = toCps(target).length + MAX_EXTRA_CHARS;
     if (cps.length > maxLen) cps = cps.slice(0, maxLen);
@@ -374,7 +438,7 @@ export function useTypingEngine() {
     ensureWords();
 
     if (
-      mode.value === "words" &&
+      (mode.value === "words" || mode.value === "lesson") &&
       currentWordIndex.value >= words.value.length
     ) {
       finishTest();
@@ -414,6 +478,18 @@ export function useTypingEngine() {
     }
   }
 
+  function setPunctuation(val: boolean) {
+    if (hasPunctuation.value === val) return;
+    hasPunctuation.value = val;
+    puncCookie.value = val;
+    if (import.meta.client) {
+      try {
+        localStorage.setItem("laotype_punctuation", String(val));
+      } catch {}
+    }
+    initTest();
+  }
+
   function setLanguage(newLanguage: TypingLanguage) {
     if (language.value === newLanguage) return;
     language.value = newLanguage;
@@ -426,28 +502,65 @@ export function useTypingEngine() {
     initTest();
   }
 
+  function loadLesson(lessonId: string): boolean {
+    const lesson = findLessonById(lessonId);
+    if (!lesson) return false;
+
+    currentLesson.value = lesson;
+    mode.value = "lesson";
+    if (lesson.language !== language.value) {
+      language.value = lesson.language;
+      langCookie.value = lesson.language;
+      if (import.meta.client) {
+        try {
+          localStorage.setItem("laotype_language", lesson.language);
+        } catch {}
+      }
+    }
+    initTest();
+    return true;
+  }
+
+  function nextLesson(): boolean {
+    if (!currentLesson.value) return false;
+    const next = getNextLesson(currentLesson.value.id);
+    if (next) {
+      return loadLesson(next.id);
+    }
+    return false;
+  }
+
   function setMode(newMode: TestMode) {
     mode.value = newMode;
+    if (newMode !== "lesson") {
+      currentLesson.value = null;
+    }
     initTest();
   }
 
   function setTimeLimit(seconds: TimeOption) {
     timeLimit.value = seconds;
     mode.value = "time";
+    currentLesson.value = null;
     initTest();
   }
 
   function setWordLimit(count: WordOption) {
     wordLimit.value = count;
     mode.value = "words";
+    currentLesson.value = null;
     initTest();
   }
 
   return {
     language,
+    hasPunctuation,
     mode,
     timeLimit,
     wordLimit,
+    currentLesson,
+    lessonResult,
+    lessonProgress,
     status,
     words,
     currentWordIndex,
@@ -469,6 +582,13 @@ export function useTypingEngine() {
     handleInput,
     handleCompositionEnd, // NEW: bind to @compositionend
     handleKeydown,
+    loadLesson,
+    nextLesson,
+    getLessonProgress,
+    isLessonCompleted,
+    getLessonStars,
+    isLessonUnlocked,
+    setPunctuation,
     setLanguage,
     setMode,
     setTimeLimit,

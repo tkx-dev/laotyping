@@ -23,6 +23,9 @@ export function normalizeLao(s: string): string {
   return (
     s
       .normalize("NFC")
+      // smart quotes normalization (iOS / macOS smart quotes to ASCII)
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2018\u2019]/g, "'")
       // invisible chars (zero-width space etc.) that sneak in from word lists / copy-paste
       .replace(/[\u200B-\u200D\uFEFF]/g, "")
       // ໍ + າ  ->  ຳ
