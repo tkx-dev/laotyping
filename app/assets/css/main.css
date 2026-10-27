@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root, [data-theme="coffee"] {
@@ -87,8 +88,8 @@
 
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-lao: 'Noto Sans Lao', system-ui, -apple-system, sans-serif;
-  --font-phetsarath: 'Phetsarath OT', 'Phetsarath', system-ui, sans-serif;
+  --font-lao: 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-phetsarath: 'Noto Sans Lao', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   --color-theme-bg: var(--theme-bg);

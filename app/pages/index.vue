@@ -4,16 +4,18 @@ import { useTypingEngine } from "../composables/useTypingEngine";
 import { useTheme } from "../composables/useTheme";
 
 // SEO and Meta (System UI is in Lao)
-useHead({
+useServerSeoMeta({
   title: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)",
-  meta: [
-    {
-      name: "description",
-      content:
-        "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
-    },
-    { name: "viewport", content: "width=device-width, initial-scale=1.0" },
-  ],
+  ogTitle: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)",
+  description:
+    "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
+  ogDescription:
+    "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
+  ogType: "website",
+  twitterCard: "summary_large_image",
+});
+
+useHead({
   link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.ico" }],
 });
 
@@ -200,18 +202,52 @@ const incorrectWordsCount = computed(
     <main class="my-auto">
       <template v-if="status !== 'finished'">
         <!-- Controls Bar (Typing Language, Modes & Options) -->
-        <TypingControls
-          :language="language"
-          :has-punctuation="hasPunctuation"
-          :mode="mode"
-          :time-limit="timeLimit"
-          :word-limit="wordLimit"
-          @update:language="handleUpdateLanguage"
-          @update:has-punctuation="handleUpdatePunctuation"
-          @update:mode="handleUpdateMode"
-          @update:time-limit="handleUpdateTimeLimit"
-          @update:word-limit="handleUpdateWordLimit"
-        />
+        <div
+          class="transition-all duration-300"
+          :class="status === 'running' ? 'opacity-30 hover:opacity-100' : 'opacity-100'"
+        >
+          <TypingControls
+            :language="language"
+            :has-punctuation="hasPunctuation"
+            :mode="mode"
+            :time-limit="timeLimit"
+            :word-limit="wordLimit"
+            @update:language="handleUpdateLanguage"
+            @update:has-punctuation="handleUpdatePunctuation"
+            @update:mode="handleUpdateMode"
+            @update:time-limit="handleUpdateTimeLimit"
+            @update:word-limit="handleUpdateWordLimit"
+          />
+        </div>
+
+        <!-- Live Status Floating HUD (Visible during active test) -->
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 -translate-y-2"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-2"
+        >
+          <div
+            v-if="status === 'running'"
+            class="flex items-center justify-between px-3 py-1 mb-2 font-mono text-sm max-w-2xl mx-auto w-full select-none"
+          >
+            <div class="flex items-center gap-2 text-theme-accent font-bold">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-theme-accent opacity-75" />
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-theme-accent" />
+              </span>
+              <span v-if="mode === 'time'">{{ timeLeft }}s</span>
+              <span v-else>{{ currentWordIndex }} / {{ mode === 'lesson' ? words.length : wordLimit }}</span>
+            </div>
+
+            <div class="flex items-center gap-4 text-xs font-semibold text-theme-muted">
+              <span>WPM <strong class="text-theme-primary font-bold text-sm">{{ wpm }}</strong></span>
+              <span>ACC <strong class="text-theme-primary font-bold text-sm">{{ accuracy }}%</strong></span>
+            </div>
+          </div>
+        </Transition>
 
         <!-- Active Typing Area -->
         <TypingArea

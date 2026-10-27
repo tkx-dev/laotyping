@@ -119,11 +119,11 @@ defineExpose({
 
 <template>
   <section
-    class="relative bg-theme-card border rounded-2xl p-6 sm:p-10 min-h-[220px] flex flex-col justify-center backdrop-blur-2xl shadow-2xl transition-all outline-none cursor-text"
+    class="relative bg-theme-card/90 border rounded-3xl p-6 sm:p-10 min-h-[240px] flex flex-col justify-center backdrop-blur-2xl shadow-2xl transition-all duration-300 outline-none cursor-text overflow-hidden"
     :class="
       isFocused
-        ? 'border-theme-border shadow-theme-accent/5'
-        : 'border-theme-border-subtle'
+        ? 'border-theme-accent/40 shadow-[0_12px_40px_rgba(0,0,0,0.35),0_0_24px_var(--color-theme-accent-glow)]'
+        : 'border-theme-border-subtle hover:border-theme-border/50'
     "
     @click="focusInput"
   >
@@ -155,58 +155,70 @@ defineExpose({
     >
       <div
         v-if="combo && combo >= 5"
-        class="absolute top-3 right-4 sm:top-4 sm:right-6 z-20 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-theme-surface/90 border border-theme-accent/40 shadow-lg backdrop-blur-md select-none pointer-events-none"
+        class="absolute top-3 right-4 sm:top-5 sm:right-6 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-theme-surface/95 border border-theme-accent/50 shadow-lg shadow-theme-accent/15 backdrop-blur-md select-none pointer-events-none animate-bounce"
+        style="animation-duration: 2s;"
       >
-        <span class="animate-pulse text-xs">🔥</span>
-        <span
-          class="font-mono text-xs font-black tracking-wider text-theme-accent"
-        >
+        <span class="text-xs">🔥</span>
+        <span class="font-mono text-xs font-black tracking-wider text-theme-accent">
           {{ combo }}
         </span>
-        <span
-          class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight"
-        >
+        <span class="font-mono text-[10px] uppercase font-bold text-theme-muted tracking-tight">
           Streak
         </span>
       </div>
     </Transition>
 
-    <!-- Unfocused Prompt Overlay -->
-    <div
-      v-if="!isFocused"
-      class="absolute inset-0 flex items-center justify-center bg-stone-950/70 backdrop-blur-xs rounded-2xl z-10 cursor-pointer select-none"
-      @click.stop="focusInput"
+    <!-- Unfocused Prompt Overlay with Smooth Glassmorphic Aesthetics -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
     >
-      <span
-        class="text-theme-accent font-semibold text-lg"
-        :class="language === 'english' ? 'font-mono text-base sm:text-lg' : 'font-phetsarath text-lg'"
+      <div
+        v-if="!isFocused"
+        class="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs rounded-3xl z-10 cursor-pointer select-none p-4"
+        @click.stop="focusInput"
       >
-        {{
-          language === "english"
-            ? "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ (Click to focus)"
-            : "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ"
-        }}
-      </span>
-    </div>
+        <div class="flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-theme-surface/90 border border-theme-accent/40 shadow-xl shadow-black/40 text-theme-accent transition-transform hover:scale-105">
+          <svg class="w-5 h-5 animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10" />
+          </svg>
+          <span
+            class="font-semibold text-sm sm:text-base tracking-wide"
+            :class="language === 'english' ? 'font-mono' : 'font-lao'"
+          >
+            {{
+              language === "english"
+                ? "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ (Click to focus)"
+                : "ກົດທີ່ນີ້ ຫຼື ກົດປຸ່ມໃດກໍໄດ້ເພື່ອເລີ່ມພິມ"
+            }}
+          </span>
+        </div>
+      </div>
+    </Transition>
 
-    <!-- Words Stream -->
+    <!-- Words Stream with Diacritic Clearance and High-Legibility Typography -->
     <div
       ref="wordsDisplayRef"
       :lang="language === 'english' ? 'en' : 'lo'"
-      class="flex flex-wrap gap-x-4 gap-y-2 py-1 text-xl sm:text-2xl leading-relaxed select-none max-h-[200px] overflow-hidden"
+      class="flex flex-wrap gap-x-4 gap-y-3 py-2 text-xl sm:text-2xl leading-[2.5] sm:leading-[2.6] select-none max-h-[220px] overflow-hidden"
       :class="
         language === 'english'
           ? 'font-mono font-medium tracking-normal'
-          : 'font-phetsarath font-semibold'
+          : 'font-lao font-medium tracking-wide'
       "
     >
       <span
         v-for="(word, wIdx) in words"
         :key="wIdx"
-        class="relative inline-block transition-colors rounded-xs"
+        class="relative inline-block transition-all duration-150 rounded-md px-1"
         :class="{
-          'active-word': wIdx === currentWordIndex,
-          'text-theme-subtle': wIdx > currentWordIndex,
+          'active-word bg-theme-surface/50 ring-1 ring-theme-accent/25': wIdx === currentWordIndex,
+          'text-theme-subtle opacity-70': wIdx > currentWordIndex,
         }"
       >
         <!-- Previously completed word -->
@@ -223,7 +235,7 @@ defineExpose({
               :class="
                 c.state === 'correct'
                   ? 'text-theme-correct'
-                  : 'text-theme-incorrect'
+                  : 'text-theme-incorrect underline decoration-theme-incorrect/50 underline-offset-4'
               "
             >
               {{ c.text }}
@@ -233,7 +245,7 @@ defineExpose({
             </span>
           </template>
 
-          <span v-else class="text-theme-incorrect">{{ word }}</span>
+          <span v-else class="text-theme-incorrect underline decoration-theme-incorrect/50 underline-offset-4">{{ word }}</span>
         </template>
 
         <!-- Currently active word: one <span> per cluster (consonant + its vowel/tone marks) -->
@@ -245,7 +257,7 @@ defineExpose({
               class="relative inline-block w-0 h-0 leading-none align-baseline pointer-events-none"
             >
               <span
-                class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"
+                class="absolute -left-[1.5px] top-[-0.95em] w-[3px] h-[1.25em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_10px_var(--color-theme-accent)]"
               />
             </span>
             <span class="relative inline-block">
@@ -261,7 +273,7 @@ defineExpose({
               <!-- Wrong key(s): draw what the user typed in translucent red ON TOP of the correct glyph -->
               <span
                 v-if="c.state === 'wrong'"
-                class="absolute left-0 top-0 text-theme-incorrect opacity-90 pointer-events-none"
+                class="absolute left-0 top-0 text-theme-incorrect opacity-95 pointer-events-none font-bold"
               >
                 {{ c.typedText }}
               </span>
@@ -269,7 +281,7 @@ defineExpose({
           </template>
 
           <!-- Characters typed beyond the end of the word -->
-          <span v-if="activeWordView.extra" class="text-theme-incorrect">
+          <span v-if="activeWordView.extra" class="text-theme-incorrect font-bold bg-theme-incorrect/10 rounded px-0.5">
             {{ activeWordView.extra }}
           </span>
 
@@ -279,7 +291,7 @@ defineExpose({
             class="relative inline-block w-0 h-0 leading-none align-baseline pointer-events-none"
           >
             <span
-              class="absolute -left-[1px] top-[-0.9em] w-[2.5px] h-[1.15em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_8px_var(--color-theme-accent)]"
+              class="absolute -left-[1.5px] top-[-0.95em] w-[3px] h-[1.25em] bg-theme-accent rounded-full caret-pulse shadow-[0_0_10px_var(--color-theme-accent)]"
             />
           </span>
         </template>
