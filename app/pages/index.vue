@@ -3,20 +3,110 @@ import { ref, onMounted, onUnmounted, nextTick, computed } from "vue";
 import { useTypingEngine } from "../composables/useTypingEngine";
 import { useTheme } from "../composables/useTheme";
 
+const config = useRuntimeConfig();
+const siteUrl = (config.public?.siteUrl as string) || "https://typing.nungdees.xyz";
+const googleSiteVerification = (config.public?.googleSiteVerification as string) || "";
+
 // SEO and Meta (System UI is in Lao)
 useServerSeoMeta({
   title: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)",
   ogTitle: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Test)",
   description:
-    "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
+    "LaoType ເປັນເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
   ogDescription:
-    "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
+    "LaoType ເປັນເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍ ວັດຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ (Lao Typing Speed Test)",
   ogType: "website",
+  ogUrl: siteUrl,
+  ogImage: `${siteUrl}/og-image.jpg`,
+  ogImageAlt: "LaoType - Lao Typing Speed Test Banner",
+  ogLocale: "lo_LA",
   twitterCard: "summary_large_image",
+  twitterTitle: "LaoType - ເວັບໄຊຝຶກພິມດີດພາສາລາວ",
+  twitterDescription:
+    "ທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວ ແລະ ພາສາອັງກິດອອນລາຍຟຣີ ວັດແທກ WPM ດ້ວຍແປ້ນພິມຈຳລອງ",
+  twitterImage: `${siteUrl}/og-image.jpg`,
+  googleSiteVerification: googleSiteVerification || undefined,
 });
 
 useHead({
-  link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.ico" }],
+  link: [
+    { rel: "canonical", href: siteUrl },
+    { rel: "alternate", hreflang: "lo", href: siteUrl },
+    { rel: "alternate", hreflang: "en", href: siteUrl },
+    { rel: "alternate", hreflang: "x-default", href: siteUrl },
+    { rel: "icon", type: "image/svg+xml", href: "/favicon.ico" },
+  ],
+  script: [
+    {
+      type: "application/ld+json",
+      innerHTML: JSON.stringify([
+        {
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "LaoType",
+          alternateName: "Lao Typing Speed Test",
+          url: siteUrl,
+          applicationCategory: "EducationalApplication",
+          operatingSystem: "All",
+          browserRequirements: "Requires HTML5 and JavaScript",
+          description:
+            "ເວັບໄຊທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວອອນລາຍຟຣີ ວັດແທກຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ ຮອງຮັບແປ້ນພິມລາວມາດຕະຖານ",
+          inLanguage: ["lo", "en"],
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "USD",
+          },
+          featureList: [
+            "ທົດສອບຄວາມໄວການພິມດີດພາສາລາວ (WPM/CPM)",
+            "ຄຳນວນຄວາມຖືກຕ້ອງ (Accuracy) ແບບ Real-time",
+            "ຮອງຮັບທັງໂໝດເວລາ (Time) ແລະ ໂໝດຈຳນວນຄຳ (Words)",
+            "ແປ້ນພິມຈຳລອງພາສາລາວ (Virtual Lao Keyboard Layout)",
+            "ບົດຮຽນຝຶກພິມ ແລະ ລະບົບສຽງຕອບສະໜອງ (Sound Effects)",
+          ],
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "LaoType",
+          url: siteUrl,
+          inLanguage: ["lo", "en"],
+          description:
+            "ເວັບໄຊຝຶກພິມດີດພາສາລາວອອນລາຍ (Lao Typing Practice & Speed Test)",
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: [
+            {
+              "@type": "Question",
+              name: "LaoType ແມ່ນຫຍັງ?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "LaoType ເປັນເວັບໄຊຝຶກພິມດີດ ແລະ ທົດສອບຄວາມໄວການພິມພາສາລາວ ແລະ ພາສາອັງກິດອອນລາຍຟຣີ ຄ້າຍຄືກັບ Monkeytype ແຕ່ຖືກອອກແບບມາສະເພາະສຳລັບພາສາລາວ.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "WPM ແມ່ນຫຍັງ ແລະ ວັດແທກຄວາມໄວແນວໃດ?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "WPM (Words Per Minute) ແມ່ນຈຳນວນຄຳທີ່ພິມໄດ້ຕໍ່ນາທີ ໂດຍຄິດໄລ່ຈາກຈຳນວນຕົວອັກສອນທີ່ພິມຖືກຕ້ອງຫານດ້ວຍ 5 ແລ້ວຫານດ້ວຍເວລາທີ່ໃຊ້ເປັນນາທີ.",
+              },
+            },
+            {
+              "@type": "Question",
+              name: "ຮອງຮັບແປ້ນພິມພາສາລາວແບບໃດແດ່?",
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: "ຮອງຮັບແປ້ນພິມພາສາລາວມາດຕະຖານ (Lao Standard Keyboard Layout) ທີ່ໃຊ້ທົ່ວໄປໃນ Windows, macOS, iOS ແລະ Android.",
+              },
+            },
+          ],
+        },
+      ]),
+    },
+  ],
 });
 
 const {
@@ -293,6 +383,9 @@ const incorrectWordsCount = computed(
         @restart="restart"
       />
     </main>
+
+    <!-- SEO Content Section -->
+    <SeoContent />
 
     <!-- Footer -->
     <AppFooter />

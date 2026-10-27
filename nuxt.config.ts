@@ -32,12 +32,13 @@ export default defineNuxtConfig({
         // Open Graph / Facebook
         { property: 'og:site_name', content: 'LaoType' },
         { property: 'og:type', content: 'website' },
+        { property: 'og:url', content: 'https://typing.nungdees.xyz' },
         { property: 'og:title', content: 'LaoType | ເວັບໄຊຝຶກພິມດີດພາສາລາວ (Lao Typing Speed Test)' },
         {
           property: 'og:description',
           content: 'ທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວ ແລະ ພາສາອັງກິດອອນລາຍຟຣີ ວັດແທກຄວາມໄວ WPM ແລະ ຄວາມຖືກຕ້ອງ ດ້ວຍລະບົບທີ່ທັນສະໄໝ',
         },
-        { property: 'og:image', content: '/og-image.jpg' },
+        { property: 'og:image', content: 'https://typing.nungdees.xyz/og-image.jpg' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '675' },
         { property: 'og:image:alt', content: 'LaoType - Lao Typing Speed Test Banner' },
@@ -50,14 +51,24 @@ export default defineNuxtConfig({
           name: 'twitter:description',
           content: 'ທົດສອບ ແລະ ຝຶກພິມດີດພາສາລາວ ແລະ ພາສາອັງກິດອອນລາຍຟຣີ ວັດແທກ WPM ດ້ວຍແປ້ນພິມຈຳລອງ',
         },
-        { name: 'twitter:image', content: '/og-image.jpg' },
+        { name: 'twitter:image', content: 'https://typing.nungdees.xyz/og-image.jpg' },
       ],
       link: [
+        { rel: 'canonical', href: 'https://typing.nungdees.xyz' },
+        { rel: 'alternate', hreflang: 'lo', href: 'https://typing.nungdees.xyz' },
+        { rel: 'alternate', hreflang: 'en', href: 'https://typing.nungdees.xyz' },
+        { rel: 'alternate', hreflang: 'x-default', href: 'https://typing.nungdees.xyz' },
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         { rel: 'manifest', href: '/site.webmanifest' },
       ],
+    },
+  },
+  runtimeConfig: {
+    public: {
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://typing.nungdees.xyz',
+      googleSiteVerification: process.env.NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
     },
   },
   modules: [
