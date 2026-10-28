@@ -23,11 +23,13 @@ const emit = defineEmits<{
   <header
     class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8"
   >
-    <!-- Logo Group -->
-    <div
-      class="flex items-center gap-3 cursor-pointer select-none group"
-      @click="emit('restart')"
-    >
+    <!-- Left: Logo + Lessons nav -->
+    <div class="flex items-center gap-4">
+      <!-- Logo Group -->
+      <div
+        class="flex items-center gap-3 cursor-pointer select-none group"
+        @click="emit('restart')"
+      >
       <div
         class="relative w-11 h-11 rounded-xl bg-theme-surface border border-theme-border/80 flex items-center justify-center shadow-lg transition-all group-hover:scale-105 group-hover:border-theme-accent group-hover:shadow-[0_0_16px_var(--color-theme-accent-glow)] overflow-hidden"
       >
@@ -48,6 +50,19 @@ const emit = defineEmits<{
           ເວັບໄຊຝຶກພິມດີດພາສາລາວ
         </p>
       </div>
+    </div>
+      <!-- Lessons Nav Link -->
+      <NuxtLink
+        to="/lessons"
+        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-lao font-semibold border transition-all duration-200 select-none group"
+        active-class="bg-theme-accent/15 text-theme-accent border-theme-accent/40"
+        inactive-class="text-theme-muted border-theme-border-subtle/50 hover:text-theme-accent hover:border-theme-accent/40 hover:bg-theme-accent/10"
+      >
+        <svg class="w-4 h-4 transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span class="hidden sm:inline">ບົດຮຽນ</span>
+      </NuxtLink>
     </div>
 
     <!-- Right Header: Theme Switcher & Live Stats -->
