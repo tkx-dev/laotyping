@@ -4,8 +4,10 @@ import { useTypingEngine } from "../composables/useTypingEngine";
 import { useTheme } from "../composables/useTheme";
 
 const config = useRuntimeConfig();
-const siteUrl = (config.public?.siteUrl as string) || "https://typing.nungdees.xyz";
-const googleSiteVerification = (config.public?.googleSiteVerification as string) || "";
+const siteUrl =
+  (config.public?.siteUrl as string) || "https://typing.nungdees.xyz";
+const googleSiteVerification =
+  (config.public?.googleSiteVerification as string) || "";
 
 // SEO and Meta (System UI is in Lao)
 useServerSeoMeta({
@@ -294,7 +296,11 @@ const incorrectWordsCount = computed(
         <!-- Controls Bar (Typing Language, Modes & Options) -->
         <div
           class="transition-all duration-300"
-          :class="status === 'running' ? 'opacity-30 hover:opacity-100' : 'opacity-100'"
+          :class="
+            status === 'running'
+              ? 'opacity-30 hover:opacity-100'
+              : 'opacity-100'
+          "
         >
           <TypingControls
             :language="language"
@@ -325,16 +331,35 @@ const incorrectWordsCount = computed(
           >
             <div class="flex items-center gap-2 text-theme-accent font-bold">
               <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-theme-accent opacity-75" />
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-theme-accent" />
+                <span
+                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-theme-accent opacity-75"
+                />
+                <span
+                  class="relative inline-flex rounded-full h-2 w-2 bg-theme-accent"
+                />
               </span>
               <span v-if="mode === 'time'">{{ timeLeft }}s</span>
-              <span v-else>{{ currentWordIndex }} / {{ mode === 'lesson' ? words.length : wordLimit }}</span>
+              <span v-else
+                >{{ currentWordIndex }} /
+                {{ mode === "lesson" ? words.length : wordLimit }}</span
+              >
             </div>
 
-            <div class="flex items-center gap-4 text-xs font-semibold text-theme-muted">
-              <span>WPM <strong class="text-theme-primary font-bold text-sm">{{ wpm }}</strong></span>
-              <span>ACC <strong class="text-theme-primary font-bold text-sm">{{ accuracy }}%</strong></span>
+            <div
+              class="flex items-center gap-4 text-xs font-semibold text-theme-muted"
+            >
+              <span
+                >WPM
+                <strong class="text-theme-primary font-bold text-sm">{{
+                  wpm
+                }}</strong></span
+              >
+              <span
+                >ACC
+                <strong class="text-theme-primary font-bold text-sm"
+                  >{{ accuracy }}%</strong
+                ></span
+              >
             </div>
           </div>
         </Transition>
